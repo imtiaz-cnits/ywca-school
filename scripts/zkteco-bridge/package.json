@@ -1,0 +1,15 @@
+{
+  "name": "ywca-zkteco-k40-bridge",
+  "version": "1.0.0",
+  "description": "Local Sync Bridge daemon for ZKTeco K40 Biometric attendance to YWCA Next.js Cloud",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "node-zklib": "^1.0.8"
+  }
+}
+
