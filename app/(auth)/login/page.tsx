@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Loader2, Lock, Mail, School } from 'lucide-react';
+import { ArrowRight, Loader2, Lock, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { toast } from 'sonner';

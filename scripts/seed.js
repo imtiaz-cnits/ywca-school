@@ -98,20 +98,22 @@ async function main() {
     // Create sections for this class
     const sections = ['Padma', 'Meghna', 'Jamuna'];
     for (const sec of sections) {
-      await prisma.section.upsert({
+      const existingSec = await prisma.section.findFirst({
         where: {
-          name_classId: {
-            name: sec,
-            classId: cls.id,
-          },
-        },
-        update: {},
-        create: {
           name: sec,
           classId: cls.id,
-          capacity: 40,
         },
       });
+
+      if (!existingSec) {
+        await prisma.section.create({
+          data: {
+            name: sec,
+            classId: cls.id,
+            capacity: 40,
+          },
+        });
+      }
     }
   }
   console.log('✅ Classes & Sections created.');

@@ -3,13 +3,13 @@
 import { APP_CONFIG, ATTENDANCE_STATUS_LABELS } from '@/lib/constants';
 import { format } from 'date-fns';
 import {
-  Clock,
-  Fingerprint,
-  Printer,
-  RefreshCw,
-  Search,
-  UserCheck,
-  UserX
+    Clock,
+    Fingerprint,
+    Printer,
+    RefreshCw,
+    Search,
+    UserCheck,
+    UserX
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';

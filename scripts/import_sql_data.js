@@ -15,57 +15,97 @@ const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
-function parseSqlValues(content, tableName) {
-  const regex = new RegExp(`INSERT INTO \`${tableName}\`[^(]*VALUES\\s*([\\s\\S]*?);`, 'gi');
-  const matches = [];
-  let match;
-
-  while ((match = regex.exec(content)) !== null) {
-    const rawValues = match[1].trim();
-    // Split value groups: (val1, val2), (val3, val4)
-    const rowRegex = /\((.*?)\)(?:,\s*|\s*$)/gs;
-    let rowMatch;
-    while ((rowMatch = rowRegex.exec(rawValues)) !== null) {
-      const rowStr = rowMatch[1];
-      // Tokenize values respecting quotes
-      const values = [];
-      let current = '';
-      let inQuote = false;
-      let quoteChar = '';
-
-      for (let i = 0; i < rowStr.length; i++) {
-        const char = rowStr[i];
-        if ((char === "'" || char === '"') && (i === 0 || rowStr[i - 1] !== '\\')) {
-          if (!inQuote) {
-            inQuote = true;
-            quoteChar = char;
-          } else if (char === quoteChar) {
-            inQuote = false;
-          } else {
-            current += char;
-          }
-        } else if (char === ',' && !inQuote) {
-          values.push(cleanVal(current));
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      values.push(cleanVal(current));
-      matches.push(values);
-    }
-  }
-  return matches;
-}
-
 function cleanVal(v) {
+  if (!v) return null;
   let val = v.trim();
   if (val.toUpperCase() === 'NULL') return null;
   if ((val.startsWith("'") && val.endsWith("'")) || (val.startsWith('"') && val.endsWith('"'))) {
     val = val.slice(1, -1);
   }
   val = val.replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-  return val;
+  return val.trim();
+}
+
+function tokenizeRow(rowStr) {
+  const values = [];
+  let current = '';
+  let inQuote = false;
+  let quoteChar = '';
+
+  for (let i = 0; i < rowStr.length; i++) {
+    const char = rowStr[i];
+    if ((char === "'" || char === '"') && (i === 0 || rowStr[i - 1] !== '\\')) {
+      if (!inQuote) {
+        inQuote = true;
+        quoteChar = char;
+      } else if (char === quoteChar) {
+        inQuote = false;
+      } else {
+        current += char;
+      }
+    } else if (char === ',' && !inQuote) {
+      values.push(cleanVal(current));
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(cleanVal(current));
+  return values;
+}
+
+function parseSqlValues(content, tableName) {
+  const regex = new RegExp("INSERT INTO \\`" + tableName + "\\`[\\s\\S]*?VALUES\\s*([\\s\\S]*?);", "gi");
+  const matches = [];
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    const rawValues = match[1].trim();
+    let currentRow = '';
+    let inQuote = false;
+    let quoteChar = '';
+    let parenDepth = 0;
+
+    for (let i = 0; i < rawValues.length; i++) {
+      const char = rawValues[i];
+      if ((char === "'" || char === '"') && (i === 0 || rawValues[i - 1] !== '\\')) {
+        if (!inQuote) {
+          inQuote = true;
+          quoteChar = char;
+        } else if (char === quoteChar) {
+          inQuote = false;
+        }
+      }
+
+      if (!inQuote) {
+        if (char === '(') {
+          parenDepth++;
+          if (parenDepth === 1) {
+            currentRow = '';
+            continue;
+          }
+        } else if (char === ')') {
+          parenDepth--;
+          if (parenDepth === 0) {
+            matches.push(tokenizeRow(currentRow));
+            currentRow = '';
+            continue;
+          }
+        }
+      }
+
+      if (parenDepth > 0) {
+        currentRow += char;
+      }
+    }
+  }
+  return matches;
+}
+
+function parseSafeDate(d, defaultDate = null) {
+  if (!d || d === '0000-00-00' || d === 'N/A') return defaultDate;
+  const parsed = new Date(d);
+  return isNaN(parsed.getTime()) ? defaultDate : parsed;
 }
 
 async function main() {
@@ -73,10 +113,10 @@ async function main() {
 
   // Search for the SQL file
   const possiblePaths = [
-    path.join(__dirname, '..', '..', 'codenext_ywca_sms_soft.sql'),
-    path.join(__dirname, '..', 'codenext_ywca_sms_soft.sql'),
     path.join(process.cwd(), 'codenext_ywca_sms_soft.sql'),
-    path.join(process.cwd(), '..', 'codenext_ywca_sms_soft.sql'),
+    path.join(__dirname, '..', 'codenext_ywca_sms_soft.sql'),
+    path.join(__dirname, '..', '..', 'codenext_ywca_sms_soft.sql'),
+    path.join(__dirname, 'codenext_ywca_sms_soft.sql'),
   ];
 
   let sqlPath = null;
@@ -99,7 +139,6 @@ async function main() {
   console.log('\n--- 1. Migrating Users ---');
   const userRows = parseSqlValues(sqlContent, 'users');
   for (const row of userRows) {
-    // Structure: [id, img_url, firstName, lastName, email, mobile, password, otp, status, role, created_at, updated_at]
     const [id, img, firstName, lastName, email, mobile, pass, otp, status, role] = row;
     if (!email) continue;
 
@@ -119,7 +158,6 @@ async function main() {
         role: userRole,
       },
       create: {
-        id: parseInt(id, 10),
         name: fullName,
         email,
         phone: mobile,
@@ -131,7 +169,7 @@ async function main() {
     console.log(`✅ User: ${email} (${fullName})`);
   }
 
-  // Ensure super admin exists
+  // Ensure default super admin exists
   const superPass = await bcrypt.hash('admin123', 10);
   await prisma.user.upsert({
     where: { email: 'admin@ywcaschool.edu.bd' },
@@ -151,20 +189,19 @@ async function main() {
   const classMap = new Map(); // oldId -> newId
 
   for (const row of classRows) {
-    // Structure: [id, class_name, user_id, created_at, updated_at]
     const [id, className] = row;
     if (!className) continue;
 
-    const cls = await prisma.class.upsert({
-      where: { name: className },
-      update: {},
-      create: {
-        id: parseInt(id, 10),
-        name: className,
-        numericValue: parseInt(id, 10) - 1,
-        order: parseInt(id, 10),
-      },
-    });
+    let cls = await prisma.class.findFirst({ where: { name: className } });
+    if (!cls) {
+      cls = await prisma.class.create({
+        data: {
+          name: className,
+          numericValue: parseInt(id, 10) - 1,
+          order: parseInt(id, 10),
+        },
+      });
+    }
     classMap.set(parseInt(id, 10), cls.id);
     console.log(`✅ Class [${cls.id}]: ${className}`);
   }
@@ -175,7 +212,6 @@ async function main() {
   const sectionMap = new Map(); // oldId -> newId
 
   for (const row of sectionRows) {
-    // Structure: [id, section_name, user_id, created_at, updated_at]
     const [id, sectionName] = row;
     if (!sectionName) continue;
 
@@ -183,7 +219,6 @@ async function main() {
     if (!sec) {
       sec = await prisma.section.create({
         data: {
-          id: parseInt(id, 10),
           name: sectionName,
           capacity: 40,
         },
@@ -199,20 +234,19 @@ async function main() {
   const shiftMap = new Map();
 
   for (const row of shiftRows) {
-    // Structure: [id, shifts_name, user_id, created_at, updated_at]
     const [id, shiftName] = row;
     if (!shiftName) continue;
 
-    const shf = await prisma.shift.upsert({
-      where: { name: shiftName },
-      update: {},
-      create: {
-        id: parseInt(id, 10),
-        name: shiftName,
-        startTime: shiftName.toLowerCase().includes('morning') ? '08:00 AM' : '12:30 PM',
-        endTime: shiftName.toLowerCase().includes('morning') ? '12:00 PM' : '04:30 PM',
-      },
-    });
+    let shf = await prisma.shift.findFirst({ where: { name: shiftName } });
+    if (!shf) {
+      shf = await prisma.shift.create({
+        data: {
+          name: shiftName,
+          startTime: shiftName.toLowerCase().includes('morning') ? '08:00 AM' : '12:30 PM',
+          endTime: shiftName.toLowerCase().includes('morning') ? '12:00 PM' : '04:30 PM',
+        },
+      });
+    }
     shiftMap.set(parseInt(id, 10), shf.id);
     console.log(`✅ Shift [${shf.id}]: ${shiftName}`);
   }
@@ -226,33 +260,26 @@ async function main() {
     const [id, sessionName] = row;
     if (!sessionName) continue;
 
-    const ses = await prisma.session.upsert({
-      where: { name: sessionName },
-      update: { isCurrent: true },
-      create: {
-        id: parseInt(id, 10),
-        name: sessionName,
-        isCurrent: true,
-      },
-    });
+    let ses = await prisma.session.findFirst({ where: { name: sessionName } });
+    if (!ses) {
+      ses = await prisma.session.create({
+        data: {
+          name: sessionName,
+          isCurrent: true,
+        },
+      });
+    }
     sessionMap.set(parseInt(id, 10), ses.id);
     console.log(`✅ Session [${ses.id}]: ${sessionName}`);
   }
 
-  // Ensure 2025 and 2026 sessions exist
+  // Ensure current 2025 and 2026 sessions exist
   const ses2025 = await prisma.session.upsert({
     where: { name: '2025' },
     update: {},
-    create: { name: '2025', isCurrent: false },
+    create: { name: '2025', isCurrent: true },
   });
   sessionMap.set(2025, ses2025.id);
-
-  const ses2026 = await prisma.session.upsert({
-    where: { name: '2026' },
-    update: {},
-    create: { name: '2026', isCurrent: false },
-  });
-  sessionMap.set(2026, ses2026.id);
 
   // 6. Migrate Students & Guardians
   console.log('\n--- 6. Migrating Students & Guardians ---');
@@ -261,7 +288,6 @@ async function main() {
   const studentIdMap = new Map(); // oldStudentTableId -> newStudent.id
 
   for (const row of studentRows) {
-    // Structure: [id, student_id, admission_no, admission_date, student_name, bangla_name, father_name, father_nid, father_mobile, mother_name, mother_nid, mother_mobile, guardian_name, guardian_mobile, dob, gender, blood_group, religion, email, student_bc, present_address, permanent_address, img_url, sms_status, status, user_id, created_at, updated_at]
     const [
       id,
       student_id,
@@ -294,8 +320,8 @@ async function main() {
 
     const studentCode = student_id ? String(student_id).trim() : `STU-${id}`;
     const cleanGender = (gender || 'Male').toLowerCase().includes('female') ? 'FEMALE' : 'MALE';
-    const cleanDob = dob && dob !== '0000-00-00' ? new Date(dob) : null;
-    const cleanAdmDate = admission_date && admission_date !== '0000-00-00' ? new Date(admission_date) : new Date();
+    const cleanDob = parseSafeDate(dob);
+    const cleanAdmDate = parseSafeDate(admission_date, new Date());
 
     const student = await prisma.student.upsert({
       where: { studentCode },
@@ -311,7 +337,6 @@ async function main() {
         status: status === 'unactive' ? 'unactive' : 'active',
       },
       create: {
-        id: parseInt(id, 10),
         studentCode,
         admissionNo: admission_no && admission_no !== 'N/A' ? admission_no : `ADM-${studentCode}`,
         admissionDate: cleanAdmDate,
@@ -370,7 +395,6 @@ async function main() {
   const defaultShift = (await prisma.shift.findFirst())?.id || 1;
 
   for (const row of regRows) {
-    // Structure: [id, roll_no, registration_date, student_id, shift_id, section_id, class_id, session_id, group_id, user_id, created_at, updated_at]
     const [id, roll_no, reg_date, oldStudentId, shift_id, section_id, class_id, session_id] = row;
 
     const studentId = studentIdMap.get(parseInt(oldStudentId, 10));
@@ -382,7 +406,7 @@ async function main() {
     const resolvedSessionId = sessionMap.get(parseInt(session_id, 10)) || defaultSession;
 
     const cleanRoll = roll_no && roll_no !== 'N/A' ? String(roll_no).trim() : null;
-    const cleanRegDate = reg_date && reg_date !== '0000-00-00' ? new Date(reg_date) : new Date();
+    const cleanRegDate = parseSafeDate(reg_date, new Date());
 
     // Check existing enrollment
     const existing = await prisma.studentEnrollment.findFirst({
@@ -436,4 +460,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-
