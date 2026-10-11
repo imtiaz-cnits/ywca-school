@@ -4,7 +4,10 @@
   "description": "Local Sync Bridge daemon for ZKTeco K40 Biometric attendance to YWCA Next.js Cloud",
   "main": "bridge.js",
   "scripts": {
-    "start": "node bridge.js"
+    "start": "node bridge.js",
+    "info": "node backup_k60.js --info-only",
+    "backup": "node backup_k60.js",
+    "test:backup": "node test_backup_mock.js"
   },
   "dependencies": {
     "axios": "^1.7.9",

@@ -33,3 +33,9 @@ next-env.d.ts
 # legacy folder
 legacy_laravel/
 
+# biometric device backups & cache
+scripts/zkteco-bridge/node_modules/
+backups/
+test_mock_backups/
+offline_punches.json
+

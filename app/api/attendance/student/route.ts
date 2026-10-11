@@ -1,11 +1,11 @@
 import prisma from '@/lib/prisma';
-import { format } from 'date-fns';
+import { formatDhakaTime12h, getDhakaAttendanceInfo } from '@/lib/timezone';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const dateStr = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
+    const dateStr = searchParams.get('date') || getDhakaAttendanceInfo(new Date()).dateOnlyStr;
     const sessionId = searchParams.get('sessionId');
     const classId = searchParams.get('classId');
     const sectionId = searchParams.get('sectionId');
@@ -65,8 +65,8 @@ export async function GET(request: Request) {
         phone: enr.student.guardian?.guardianPhone || enr.student.guardian?.fatherPhone || '-',
         attendanceId: att?.id || null,
         status: att ? att.status : 'ABSENT',
-        inTime: att?.inTime ? format(new Date(att.inTime), 'hh:mm a') : '-',
-        outTime: att?.outTime ? format(new Date(att.outTime), 'hh:mm a') : '-',
+        inTime: formatDhakaTime12h(att?.inTime),
+        outTime: formatDhakaTime12h(att?.outTime),
         source: att?.source || 'MANUAL',
       };
     });

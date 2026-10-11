@@ -77,6 +77,23 @@ async function sendPunchesToCloud(punches) {
   }
 }
 
+/**
+ * Serializes node-zklib recordTime to explicit Asia/Dhaka (+06:00) ISO string.
+ * node-zklib constructs recordTime as a local Date using the K60 wall-clock numbers.
+ * Extracting the local date components preserves the exact hardware clock
+ * completely independent of the Windows PC's operating system timezone.
+ */
+function serializeDeviceRecordTimeToDhakaIso(recordTime) {
+  const d = recordTime instanceof Date ? recordTime : new Date(recordTime);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+06:00`;
+}
+
 async function runBridge() {
   console.log('=====================================================');
   console.log('  YWCA Nursery School - ZKTeco K40 Sync Bridge v1.0  ');
@@ -113,7 +130,7 @@ async function runBridge() {
           })
           .map((item) => ({
             userId: String(item.deviceUserId),
-            timestamp: new Date(item.recordTime).toISOString(),
+            timestamp: serializeDeviceRecordTimeToDhakaIso(item.recordTime),
             verifyMode: item.ip ? 1 : 1,
           }));
 
@@ -141,5 +158,11 @@ async function runBridge() {
   }, CONFIG.pollIntervalSec * 1000);
 }
 
-runBridge().catch((err) => console.error('Fatal bridge error:', err));
+module.exports = {
+  serializeDeviceRecordTimeToDhakaIso,
+};
+
+if (require.main === module) {
+  runBridge().catch((err) => console.error('Fatal bridge error:', err));
+}
 
