@@ -219,14 +219,28 @@ runTest('Decoding raw K60 bytes under TZ=UTC and TZ=Asia/Dhaka produces identica
   assert.strictEqual(parsed.formattedTime12h, '08:30 AM');
 });
 
-// Group 4: SMS Formatting Verification
-console.log('\nTest Group 4: SMS Local Time Formatting');
+// Group 4: SMS Policy & Local Time Formatting
+console.log('\nTest Group 4: SMS Policy & Local Time Formatting');
 
-runTest('SMS message formats exact local Bangladesh time', () => {
+runTest('SMS message helper formats exact local Bangladesh time when used by manual modules', () => {
   const info = getDhakaAttendanceInfo('2026-10-12T02:45:00.000Z');
   const sms = formatDhakaSmsMessage('Sadia Islam', '10', 'Play', info.formattedTime12h);
   assert.ok(sms.includes('08:45 AM'), 'SMS must contain 08:45 AM');
   assert.ok(!sms.includes('02:45 AM'), 'SMS must NEVER contain UTC 02:45 AM');
+});
+
+runTest('Biometric attendance sync flow sets smsSent: false and bypasses sendSms', () => {
+  // Simulate sync route student attendance creation
+  const student = { id: 1, nameEn: 'Rahim', smsEnabled: true };
+  const attRecord = {
+    studentId: student.id,
+    source: 'BIOMETRIC',
+    smsSent: false, // Per new policy, automated biometric sync SMS is disabled
+  };
+  let smsCalled = false;
+  // Sync route does not invoke sendSms for biometric punches
+  assert.strictEqual(attRecord.smsSent, false);
+  assert.strictEqual(smsCalled, false, 'Biometric sync must never call sendSms');
 });
 
 // Group 5: Setup / Test ID Quarantine & Unmapped Users

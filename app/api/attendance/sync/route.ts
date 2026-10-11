@@ -1,5 +1,4 @@
 import prisma from '@/lib/prisma';
-import { sendSms } from '@/lib/sms';
 import {
   evaluateLateness,
   getDhakaAttendanceInfo,
@@ -142,20 +141,10 @@ export async function POST(request: Request) {
                 inTime: punchDate,
                 status,
                 source: 'BIOMETRIC',
-                smsSent: student.smsEnabled,
+                smsSent: false,
               },
             });
-
-            // Send Entry SMS with Bangladesh local time (e.g. "08:30 AM")
-            const guardianPhone = student.guardian?.guardianPhone || student.guardian?.fatherPhone;
-            if (student.smsEnabled && guardianPhone) {
-              sendSms({
-                numbers: [guardianPhone],
-                message: `Dear Guardian, your child ${student.nameEn} (Roll: ${enrollment.roll}, Class: ${enrollment.class.name}) reached school at ${formattedTime12h}.`,
-                type: 'ATTENDANCE_ENTRY',
-                recipientName: student.nameEn,
-              }).catch((e) => console.error('Attendance SMS Error:', e));
-            }
+            // Biometric attendance SMS notifications are disabled per school policy.
           } else {
             // Subsequent punch: Exit / Out-Time
             // 1. Exact in-time replay isolation: If timestamp is identical to inTime, do not touch outTime
