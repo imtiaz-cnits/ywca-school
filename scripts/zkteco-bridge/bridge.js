@@ -156,6 +156,83 @@ function serializeDeviceRecordTimeToDhakaIso(recordTime) {
 }
 
 /**
+ * Safely formats any error (ZKError, Error, string, object, or rejected promise)
+ * into a clear diagnostic string without leaking secrets or biometric data.
+ * 
+ * Note on node-zklib: ZKError does not extend Error and has no .message property.
+ * Instead, the underlying system/socket error is in .err (with .code, .message),
+ * and .command / .ip contain the failing operation and device target.
+ */
+function formatDiagnosticError(err, secretToRedact = '') {
+  if (err === null || err === undefined) {
+    return 'Unknown error (null or undefined)';
+  }
+
+  let summary = '';
+  let code = '';
+  let command = '';
+  let ip = '';
+
+  // node-zklib ZKError detection
+  if (typeof err === 'object' && ('command' in err || 'err' in err)) {
+    command = err.command ? ` [Command: ${err.command}]` : '';
+    ip = err.ip ? ` [Device: ${err.ip}]` : '';
+
+    const inner = err.err;
+    if (inner instanceof Error) {
+      summary = inner.message;
+      code = inner.code || '';
+    } else if (typeof inner === 'string') {
+      summary = inner;
+    } else if (inner && typeof inner === 'object') {
+      summary = inner.message || inner.code || JSON.stringify(inner);
+      code = inner.code || '';
+    } else if (typeof err.toast === 'function') {
+      try {
+        summary = err.toast();
+      } catch {}
+    }
+
+    if (!summary) summary = 'Connection or communication error';
+  } else if (err instanceof Error) {
+    summary = `${err.name}: ${err.message}`;
+    code = err.code || '';
+  } else if (typeof err === 'string') {
+    summary = err;
+  } else if (typeof err === 'object') {
+    try {
+      summary = err.message || JSON.stringify(err);
+      code = err.code || '';
+    } catch {
+      summary = String(err);
+    }
+  } else {
+    summary = String(err);
+  }
+
+  const codeStr = code ? ` (code: ${code})` : '';
+  let result = (command || ip) ? `ZKError${command}${ip}: ${summary}${codeStr}` : `${summary}${codeStr}`;
+
+  // Safe redaction of secret tokens
+  if (secretToRedact && typeof secretToRedact === 'string' && secretToRedact.length > 0) {
+    result = result.split(secretToRedact).join('[REDACTED_SECRET]');
+  }
+
+  return result;
+}
+
+/**
+ * Safely extracts attendance records array from node-zklib getAttendances() return value.
+ * node-zklib getAttendances() returns an object: { data: Array<Record>, err: Error|null }.
+ */
+function extractAttendanceRecords(logs) {
+  if (!logs) return [];
+  if (Array.isArray(logs.data)) return logs.data;
+  if (Array.isArray(logs)) return logs;
+  return [];
+}
+
+/**
  * Loads the persistent bridge state from bridge_state.json.
  * If no state exists, returns null.
  */
@@ -330,12 +407,12 @@ async function runBridge() {
   // Initial startup flush of offline queue
   await flushOfflineQueue(config);
 
-  const zk = new ZKLib(config.deviceIp, config.devicePort, 10000, 4000);
   let isPolling = false;
 
   async function pollCycle() {
     if (isPolling) return;
     isPolling = true;
+    let zk = null;
 
     try {
       // 1. In-loop auto-flush: Always attempt to flush any pending offline queue first
@@ -344,9 +421,11 @@ async function runBridge() {
         await flushOfflineQueue(config);
       }
 
+      // 2. Instantiate fresh ZKLib per polling cycle to guarantee clean socket lifecycle
+      zk = new ZKLib(config.deviceIp, config.devicePort, 10000, 4000);
       await zk.createSocket();
       const logs = await zk.getAttendances();
-      const allRecords = logs && logs.data ? logs.data : [];
+      const allRecords = extractAttendanceRecords(logs);
 
       // Filter punches strictly newer than lastProcessedTime
       const newRecords = allRecords.filter((item) => {
@@ -394,11 +473,26 @@ async function runBridge() {
         }
       }
     } catch (err) {
-      console.error(`[${new Date().toLocaleTimeString()}] ⚠️ Device poll error: ${err.message}`);
+      const diagMsg = formatDiagnosticError(err, config.bridgeSecretToken);
+      console.error(`[${new Date().toLocaleTimeString()}] ⚠️ Device poll error: ${diagMsg}`);
     } finally {
-      try {
-        await zk.disconnect();
-      } catch {}
+      if (zk) {
+        try {
+          await zk.disconnect();
+        } catch {}
+        // Defensive cleanup: Ensure socket references are cleared
+        try {
+          if (zk.zklibTcp && zk.zklibTcp.socket) {
+            zk.zklibTcp.socket.destroy();
+            zk.zklibTcp.socket = null;
+          }
+          if (zk.zklibUdp && zk.zklibUdp.socket) {
+            zk.zklibUdp.socket.close();
+            zk.zklibUdp.socket = null;
+          }
+        } catch {}
+        zk = null;
+      }
       isPolling = false;
     }
   }
@@ -415,6 +509,8 @@ module.exports = {
   atomicWriteJson,
   deduplicateAndSortPunches,
   serializeDeviceRecordTimeToDhakaIso,
+  formatDiagnosticError,
+  extractAttendanceRecords,
   loadBridgeState,
   saveBridgeState,
   loadOfflineCache,
