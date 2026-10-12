@@ -185,3 +185,52 @@ export function isKnownTestId(deviceUserId: string | number): boolean {
   return KNOWN_TEST_DEVICE_IDS.has(String(deviceUserId).trim());
 }
 
+/**
+ * Detects whether a Prisma error is specifically a P2002 Unique Constraint violation
+ * on AttendanceLog's (biometricUserId, punchTime) composite key.
+ * 
+ * Strict Safety Invariants:
+ * 1. Requires err.code === 'P2002'
+ * 2. Specifically verifies that the target fields or constraint name match AttendanceLog's
+ *    biometricUserId + punchTime composite key.
+ * 3. Never swallows unrelated P2002 errors (e.g. on student_attendances, employee_attendances, users).
+ * 4. Never swallows non-P2002 database failures (e.g. P2003 foreign key error, P1001 connection loss).
+ */
+export function isAttendanceLogDuplicateError(err: any): boolean {
+  if (!err || typeof err !== 'object' || err.code !== 'P2002') {
+    return false;
+  }
+
+  const target = err.meta?.target;
+  const modelName = err.meta?.modelName;
+
+  // If modelName is explicitly specified and is NOT AttendanceLog, it is definitely unrelated
+  if (modelName && modelName !== 'AttendanceLog') {
+    return false;
+  }
+
+  // 1. Array of fields from Prisma client: must contain both biometricUserId and punchTime
+  if (Array.isArray(target)) {
+    return target.includes('biometricUserId') && target.includes('punchTime');
+  }
+
+  // 2. String target or constraint name (e.g. attendance_logs_biometricUserId_punchTime_key or biometricUserId_punchTime)
+  if (typeof target === 'string') {
+    const hasBiometric = target.includes('biometricUserId');
+    const hasPunchTime = target.includes('punchTime');
+    const isAttendanceLogs = target.includes('attendance_logs') || target.includes('AttendanceLog');
+    return (hasBiometric && hasPunchTime) || (isAttendanceLogs && hasBiometric && hasPunchTime);
+  }
+
+  // 3. Fallback check on error message specifically pointing to attendance_logs (biometricUserId, punchTime)
+  if (typeof err.message === 'string') {
+    const msg = err.message;
+    const hasBiometric = msg.includes('biometricUserId');
+    const hasPunchTime = msg.includes('punchTime');
+    return hasBiometric && hasPunchTime;
+  }
+
+  return false;
+}
+
+

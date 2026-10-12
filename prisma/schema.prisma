@@ -270,7 +270,7 @@ model AttendanceLog {
   processed       Boolean  @default(false)
   createdAt       DateTime @default(now())
 
-  @@index([biometricUserId, punchTime])
+  @@unique([biometricUserId, punchTime])
   @@map("attendance_logs")
 }
 

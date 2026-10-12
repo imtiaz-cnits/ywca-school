@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import {
   evaluateLateness,
   getDhakaAttendanceInfo,
+  isAttendanceLogDuplicateError,
   isKnownTestId,
   normalizePunchTimestamp,
   parseShiftCutoff,
@@ -14,6 +15,31 @@ interface PunchItem {
   userId: string; // Biometric User ID / Badge number in K40 / K60
   timestamp: string; // ISO string or local wall-clock string
   verifyMode?: number;
+}
+
+/**
+ * Safely inserts an AttendanceLog entry.
+ * If a concurrent race condition triggers a P2002 unique constraint conflict on
+ * (biometricUserId, punchTime), detects it as an existing duplicate punch,
+ * returning { created: false, isDuplicate: true }.
+ * If an unrelated database error occurs, re-throws to ensure genuine data integrity errors are never swallowed.
+ */
+async function safeCreateAttendanceLog(data: {
+  biometricUserId: string;
+  punchTime: Date;
+  verifyMode?: number | null;
+  rawPayload?: string | null;
+  processed: boolean;
+}): Promise<{ created: boolean; isDuplicate: boolean }> {
+  try {
+    await prisma.attendanceLog.create({ data });
+    return { created: true, isDuplicate: false };
+  } catch (err: any) {
+    if (isAttendanceLogDuplicateError(err)) {
+      return { created: false, isDuplicate: true };
+    }
+    throw err;
+  }
 }
 
 export async function POST(request: Request) {
@@ -56,14 +82,12 @@ export async function POST(request: Request) {
           });
 
           if (!existingTestLog) {
-            await prisma.attendanceLog.create({
-              data: {
-                biometricUserId,
-                punchTime: punchDate,
-                verifyMode: verifyMode || 1,
-                rawPayload: JSON.stringify({ ...punch, status: 'QUARANTINED', reason: 'KNOWN_TEST_ID' }),
-                processed: false,
-              },
+            await safeCreateAttendanceLog({
+              biometricUserId,
+              punchTime: punchDate,
+              verifyMode: verifyMode || 1,
+              rawPayload: JSON.stringify({ ...punch, status: 'QUARANTINED', reason: 'KNOWN_TEST_ID' }),
+              processed: false,
             });
           }
           // Never assign to real students or employees, never send SMS
@@ -108,15 +132,19 @@ export async function POST(request: Request) {
 
         if (student && student.enrollments.length > 0) {
           // Record raw punch in attendance_logs as processed: true
-          await prisma.attendanceLog.create({
-            data: {
-              biometricUserId,
-              punchTime: punchDate,
-              verifyMode: verifyMode || 1,
-              rawPayload: JSON.stringify(punch),
-              processed: true,
-            },
+          const logResult = await safeCreateAttendanceLog({
+            biometricUserId,
+            punchTime: punchDate,
+            verifyMode: verifyMode || 1,
+            rawPayload: JSON.stringify(punch),
+            processed: true,
           });
+
+          // Concurrent collision: another worker already recorded this exact punch log!
+          if (logResult.isDuplicate) {
+            duplicateCount++;
+            continue;
+          }
 
           const enrollment = student.enrollments[0];
           const existingAtt = await prisma.studentAttendance.findUnique({
@@ -187,15 +215,19 @@ export async function POST(request: Request) {
 
         if (employee) {
           // Record raw punch in attendance_logs as processed: true
-          await prisma.attendanceLog.create({
-            data: {
-              biometricUserId,
-              punchTime: punchDate,
-              verifyMode: verifyMode || 1,
-              rawPayload: JSON.stringify(punch),
-              processed: true,
-            },
+          const logResult = await safeCreateAttendanceLog({
+            biometricUserId,
+            punchTime: punchDate,
+            verifyMode: verifyMode || 1,
+            rawPayload: JSON.stringify(punch),
+            processed: true,
           });
+
+          // Concurrent collision: another worker already recorded this exact punch log!
+          if (logResult.isDuplicate) {
+            duplicateCount++;
+            continue;
+          }
 
           const existingAtt = await prisma.employeeAttendance.findUnique({
             where: {
@@ -251,15 +283,18 @@ export async function POST(request: Request) {
 
         // 5. Unmapped biometric ID (neither Student nor Employee)
         // Preserve raw punch for auditing, clearly marked as processed: false & reviewRequired: true
-        await prisma.attendanceLog.create({
-          data: {
-            biometricUserId,
-            punchTime: punchDate,
-            verifyMode: verifyMode || 1,
-            rawPayload: JSON.stringify({ ...punch, status: 'UNMAPPED_USER', reviewRequired: true }),
-            processed: false,
-          },
+        const logResult = await safeCreateAttendanceLog({
+          biometricUserId,
+          punchTime: punchDate,
+          verifyMode: verifyMode || 1,
+          rawPayload: JSON.stringify({ ...punch, status: 'UNMAPPED_USER', reviewRequired: true }),
+          processed: false,
         });
+
+        if (logResult.isDuplicate) {
+          duplicateCount++;
+          continue;
+        }
 
         unmappedCount++;
       } catch (err: any) {
