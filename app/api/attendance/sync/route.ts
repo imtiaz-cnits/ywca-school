@@ -12,7 +12,7 @@ import { NextResponse } from 'next/server';
 const SYNC_SECRET = process.env.BIOMETRIC_SYNC_SECRET || 'ywca_zkteco_k40_bridge_sync_token_secret_9988';
 
 interface PunchItem {
-  userId: string; // Biometric User ID / Badge number in K40 / K60
+  userId: string; // Biometric User ID / Badge number in K60
   timestamp: string; // ISO string or local wall-clock string
   verifyMode?: number;
 }

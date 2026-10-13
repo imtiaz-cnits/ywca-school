@@ -37,8 +37,11 @@ legacy_laravel/
 scripts/zkteco-bridge/node_modules/
 scripts/zkteco-bridge/bridge_state.json
 scripts/zkteco-bridge/offline_punches.json
+scripts/zkteco-bridge/backups/
 backups/
 test_mock_backups/
 offline_punches.json
+scratch/
+
 
 

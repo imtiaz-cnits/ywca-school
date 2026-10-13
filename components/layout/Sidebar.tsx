@@ -91,7 +91,7 @@ const navSections: NavSection[] = [
     description: 'Biometric punches & logs',
     children: [
       { title: 'Live Punch Monitor', href: '/attendance/live', icon: Activity },
-      { title: 'Student Attendance', href: '/attendance/students', icon: UserCheck },
+      // { title: 'Student Attendance', href: '/attendance/students', icon: UserCheck },
       { title: 'Staff Attendance', href: '/attendance/staff', icon: ClipboardCheck },
       { title: 'Manual Sheet Entry', href: '/attendance/manual', icon: Edit3 },
     ],

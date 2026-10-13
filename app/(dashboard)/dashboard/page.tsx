@@ -3,6 +3,7 @@
 import { format } from 'date-fns';
 import {
     ArrowUpRight,
+    ClipboardCheck,
     Clock,
     Fingerprint,
     GraduationCap,
@@ -47,11 +48,11 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const studentTotal = stats?.totalStudents || 0;
-  const studentPresent = stats?.studentAttendance?.present || 0;
-  const studentLate = stats?.studentAttendance?.late || 0;
-  const studentAttended = studentPresent + studentLate;
-  const studentRate = studentTotal > 0 ? Math.round((studentAttended / studentTotal) * 100) : 0;
+  const staffTotal = (stats?.totalTeachers || 0) + (stats?.totalStaff || 0);
+  const staffPresent = stats?.employeeAttendance?.present || 0;
+  const staffLate = stats?.employeeAttendance?.late || 0;
+  const staffAttended = staffPresent + staffLate;
+  const staffRate = staffTotal > 0 ? Math.round((staffAttended / staffTotal) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -169,23 +170,23 @@ export default function DashboardPage() {
 
       {/* Attendance Overview & Live Punches Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's Student Attendance Breakdown */}
+        {/* Today's Staff & Teachers Attendance Breakdown */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Fingerprint className="w-5 h-5 text-indigo-600" />
-                Today's Student Attendance
+                <ClipboardCheck className="w-5 h-5 text-indigo-600" />
+                Today's Staff & Teachers Attendance
               </h2>
               <p className="text-xs text-slate-500">
                 {format(new Date(), 'EEEE, dd MMMM yyyy')}
               </p>
             </div>
             <Link
-              href="/attendance/students"
+              href="/attendance/staff"
               className="text-xs font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
             >
-              Full Sheet <ArrowUpRight className="w-3.5 h-3.5" />
+              Staff Sheet <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
@@ -195,7 +196,7 @@ export default function DashboardPage() {
                 <UserCheck className="w-4 h-4" /> Present
               </div>
               <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
-                {studentPresent}
+                {staffPresent}
               </p>
             </div>
 
@@ -204,7 +205,7 @@ export default function DashboardPage() {
                 <Clock className="w-4 h-4" /> Late
               </div>
               <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">
-                {studentLate}
+                {staffLate}
               </p>
             </div>
 
@@ -213,7 +214,7 @@ export default function DashboardPage() {
                 <UserX className="w-4 h-4" /> Absent
               </div>
               <p className="text-2xl font-bold text-rose-700 dark:text-rose-300">
-                {stats?.studentAttendance?.absent || 0}
+                {stats?.employeeAttendance?.absent || 0}
               </p>
             </div>
 
@@ -222,7 +223,7 @@ export default function DashboardPage() {
                 Rate
               </div>
               <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">
-                {studentRate}%
+                {staffRate}%
               </p>
             </div>
           </div>
@@ -231,22 +232,22 @@ export default function DashboardPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-xs text-slate-500">
               <span>Attendance Rate</span>
-              <span className="font-semibold text-slate-700 dark:text-slate-300">{studentRate}%</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{staffRate}%</span>
             </div>
             <div className="w-full h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
               <div
-                style={{ width: `${(studentPresent / (studentTotal || 1)) * 100}%` }}
+                style={{ width: `${(staffPresent / (staffTotal || 1)) * 100}%` }}
                 className="bg-emerald-500 h-full"
                 title="Present"
               />
               <div
-                style={{ width: `${(studentLate / (studentTotal || 1)) * 100}%` }}
+                style={{ width: `${(staffLate / (staffTotal || 1)) * 100}%` }}
                 className="bg-amber-500 h-full"
                 title="Late"
               />
               <div
                 style={{
-                  width: `${(((stats?.studentAttendance?.absent || 0) / (studentTotal || 1)) * 100)}%`,
+                  width: `${(((stats?.employeeAttendance?.absent || 0) / (staffTotal || 1)) * 100)}%`,
                 }}
                 className="bg-rose-500 h-full"
                 title="Absent"
@@ -260,7 +261,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live K40 Punches
+              Live K60 Punches
             </h2>
             <Link
               href="/attendance/live"
@@ -347,7 +348,7 @@ export default function DashboardPage() {
             <Fingerprint className="w-5 h-5" />
           </div>
           <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">ZKTeco Bridge</span>
-          <span className="text-[10px] text-slate-400">K40 Agent settings</span>
+          <span className="text-[10px] text-slate-400">K60 Agent settings</span>
         </Link>
       </div>
     </div>

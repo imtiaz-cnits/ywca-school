@@ -85,7 +85,7 @@ export default function LivePunchMonitorPage() {
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Fingerprint className="w-5 h-5 text-indigo-600" />
-            Live ZKTeco K40 Biometric Punch Monitor
+            Live ZKTeco K60 Biometric Punch Monitor
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             Real-time feed of punches sent from the school gate device.
@@ -207,11 +207,11 @@ export default function LivePunchMonitorPage() {
               Hardware Integration Guide
             </div>
             <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
-              To connect your physical ZKTeco K40 device:
+              To connect your physical ZKTeco K60 device:
             </p>
             <ol className="list-decimal list-inside space-y-1.5 text-[11px] text-slate-600 dark:text-slate-400">
-              <li>Connect K40 to the school WiFi / LAN router.</li>
-              <li>Set static IP on K40 (e.g. <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded text-indigo-600">192.168.1.201</code>).</li>
+              <li>Connect K60 to the school WiFi / LAN router.</li>
+              <li>Set static IP on K60 (e.g. <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded text-indigo-600">192.168.0.134</code>).</li>
               <li>Run the lightweight Sync Agent script on any school PC.</li>
             </ol>
           </div>

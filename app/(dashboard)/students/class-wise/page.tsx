@@ -205,7 +205,7 @@ export default function ClassWiseStudentsPage() {
       {printMode === 'TABLE' ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm p-4 sm:p-6">
           {/* Printable Header */}
-          <div className="text-center pb-4 mb-4 border-b border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center">
+          <div className="hidden print:block text-center pb-4 mb-4 border-b border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.svg" alt="YWCA Logo" className="w-12 h-12 object-contain mb-1.5" />
             <h2 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-wide">

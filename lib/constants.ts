@@ -29,6 +29,7 @@ export const USER_ROLES = [
 export const ATTENDANCE_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PRESENT: { label: 'Present', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/20' },
   LATE: { label: 'Late', color: 'bg-amber-500/15 text-amber-600 border-amber-500/20' },
+  UNDER_REVIEW: { label: 'Under Review', color: 'bg-purple-500/15 text-purple-600 border-purple-500/20' },
   ABSENT: { label: 'Absent', color: 'bg-rose-500/15 text-rose-600 border-rose-500/20' },
   EXCUSED: { label: 'Excused', color: 'bg-sky-500/15 text-sky-600 border-sky-500/20' },
   HOLIDAY: { label: 'Holiday', color: 'bg-purple-500/15 text-purple-600 border-purple-500/20' },
@@ -66,7 +67,7 @@ export const NAV_ITEMS = [
     icon: 'Fingerprint',
     children: [
       { title: 'Live Punch Monitor', href: '/attendance/live' },
-      { title: 'Student Attendance', href: '/attendance/students' },
+      // { title: 'Student Attendance', href: '/attendance/students' },
       { title: 'Staff Attendance', href: '/attendance/staff' },
       { title: 'Manual Entry / Sheet', href: '/attendance/manual' },
     ],

@@ -249,8 +249,8 @@ model Employee {
 
 model BiometricDevice {
   id         Int       @id @default(autoincrement())
-  name       String    @db.VarChar(100) // e.g. "Main Gate K40"
-  ipAddress  String    @db.VarChar(50) // e.g. "192.168.1.201"
+  name       String    @db.VarChar(100) // e.g. "Main Gate K60"
+  ipAddress  String    @db.VarChar(50) // e.g. "192.168.0.134"
   port       Int       @default(4370)
   secretKey  String    @db.VarChar(100) // Auth token for local agent
   status     String    @default("active") @db.VarChar(20)

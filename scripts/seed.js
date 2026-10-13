@@ -134,8 +134,8 @@ async function main() {
   if (deviceCount === 0) {
     await prisma.biometricDevice.create({
       data: {
-        name: 'Main Gate K40 Device',
-        ipAddress: '192.168.1.201',
+        name: 'Main Gate K60 Device',
+        ipAddress: '192.168.0.134',
         port: 4370,
         secretKey: 'ywca_zkteco_k40_bridge_sync_token_secret_9988',
         status: 'active',

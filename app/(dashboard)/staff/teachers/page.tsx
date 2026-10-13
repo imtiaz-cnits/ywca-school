@@ -286,7 +286,7 @@ export default function TeachersPage() {
                     type="text"
                     value={formData.biometricId}
                     onChange={(e) => setFormData({ ...formData, biometricId: e.target.value })}
-                    placeholder="User ID in K40"
+                    placeholder="User ID in K60"
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>

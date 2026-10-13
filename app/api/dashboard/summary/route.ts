@@ -36,7 +36,7 @@ export async function GET() {
       }),
       prisma.attendanceLog.findMany({
         take: 10,
-        orderBy: { id: 'desc' },
+        orderBy: { punchTime: 'desc' },
       }),
       prisma.session.findFirst({ where: { isCurrent: true } }),
     ]);

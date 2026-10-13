@@ -29,7 +29,7 @@ export default function BiometricSettingsPage() {
       <div>
         <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Fingerprint className="w-5 h-5 text-indigo-600" />
-          ZKTeco K40 Biometric Device & Sync Agent Configuration
+          ZKTeco K60 Biometric Device & Sync Agent Configuration
         </h1>
         <p className="text-xs text-slate-500 mt-0.5">
           Step-by-step connection guide for physical ZKTeco attendance devices on school premises.
@@ -97,11 +97,11 @@ export default function BiometricSettingsPage() {
             <div className="space-y-3 text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                 <p className="font-bold text-slate-900 dark:text-white mb-1">
-                  1. Setup Physical ZKTeco K40 Device:
+                  1. Setup Physical ZKTeco K60 Device:
                 </p>
                 <p>
-                  Connect the K40 machine to the school router with an ethernet LAN cable or WiFi.
-                  Go to <span className="font-semibold text-slate-800 dark:text-slate-200">K40 Menu ➔ Comm. ➔ Network</span> and set IP Address to <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded font-mono text-indigo-600">192.168.1.201</code> (or any static local IP) and Port <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded font-mono text-indigo-600">4370</code>.
+                  Connect the K60 machine to the school router with an ethernet LAN cable or WiFi.
+                  Go to <span className="font-semibold text-slate-800 dark:text-slate-200">K60 Menu ➔ Comm. ➔ Network</span> and set IP Address to <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded font-mono text-indigo-600">192.168.0.134</code> (or any static local IP) and Port <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded font-mono text-indigo-600">4370</code>.
                 </p>
               </div>
 
@@ -145,7 +145,7 @@ export default function BiometricSettingsPage() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
             <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               <Server className="w-4 h-4 text-indigo-600" />
-              K40 Hardware Parameters
+              K60 Hardware Parameters
             </h3>
             <div className="space-y-2 text-slate-600 dark:text-slate-400 text-[11px]">
               <div className="flex justify-between">

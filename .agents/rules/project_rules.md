@@ -39,8 +39,8 @@ These instructions define the architectural, styling, database, hardware, and wo
 
 ---
 
-## 4. 📟 ZKTeco K40 Hardware & Biometric Sync Rules
-* **Device Communication:** Physical ZKTeco K40 devices communicate over LAN TCP/UDP port `4370`.
+## 4. 📟 ZKTeco K60 Hardware & Biometric Sync Rules
+* **Device Communication:** Physical ZKTeco K60 devices communicate over LAN TCP/UDP port `4370`.
 * **Sync Webhook (`/api/attendance/sync`):**
   - Requires the `x-bridge-token` HTTP header for verification.
   - Automatically identifies whether a punch belongs to a `Student` or `Employee` by matching `biometricId`.

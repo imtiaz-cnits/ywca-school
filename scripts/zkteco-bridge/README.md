@@ -1,6 +1,6 @@
-# ZKTeco K40 Local Sync Bridge Agent (YWCA Nursery School)
+# ZKTeco K60 Local Sync Bridge Agent (YWCA Nursery School)
 
-This lightweight agent runs on a local desktop/laptop at the school premises that is connected to the same LAN / WiFi router as the **ZKTeco K40** biometric machine.
+This lightweight agent runs on a local desktop/laptop at the school premises that is connected to the same LAN / WiFi router as the **ZKTeco K60** biometric machine.
 
 ---
 
@@ -8,12 +8,12 @@ This lightweight agent runs on a local desktop/laptop at the school premises tha
 
 ### 1. Requirements
 * Node.js (v18 or higher) installed on the school PC.
-* Physical ZKTeco K40 connected to the local WiFi or Ethernet cable.
+* Physical ZKTeco K60 connected to the local WiFi or Ethernet cable.
 
 ### 2. Configure Device IP
-Set static IP in ZKTeco K40:
+Set static IP in ZKTeco K60:
 * Menu $\rightarrow$ Comm. $\rightarrow$ Network:
-  * IP Address: `192.168.1.201`
+  * IP Address: `192.168.0.134` (or your local device IP)
   * Port: `4370`
 
 ### 3. Run Sync Bridge

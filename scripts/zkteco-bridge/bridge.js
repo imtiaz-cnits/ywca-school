@@ -1,5 +1,5 @@
 /**
- * YWCA Nursery School - ZKTeco K60 / K40 Biometric Sync Bridge Agent
+ * YWCA Nursery School - ZKTeco K60 Biometric Sync Bridge Agent
  * 
  * Runs on a school desktop/PC connected to the same LAN / WiFi as the physical ZKTeco device.
  * Polls the device for new attendance punches and securely syncs them to the Next.js API.
@@ -569,6 +569,17 @@ module.exports = {
 };
 
 if (require.main === module) {
+  let isShuttingDown = false;
+  const gracefulShutdown = (signal) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    console.log(`\n🛑 Received ${signal}. Shutting down bridge daemon gracefully...`);
+    process.exit(0);
+  };
+
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
   runBridge().catch((err) => {
     console.error('Fatal bridge daemon error:', err.message);
     process.exit(1);
