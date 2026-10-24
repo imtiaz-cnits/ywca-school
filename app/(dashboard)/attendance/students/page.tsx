@@ -1,5 +1,7 @@
 'use client';
 
+import FlatpickrCalendar from '@/components/FlatpickrCalendar';
+import { TablePagination, TableTopControls, useTableControls } from '@/components/TableControls';
 import { APP_CONFIG, ATTENDANCE_STATUS_LABELS } from '@/lib/constants';
 import { format } from 'date-fns';
 import {
@@ -11,11 +13,11 @@ import {
     UserCheck,
     UserX
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function StudentAttendancePage() {
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [date, setDate] = useState(format(new Date(), 'dd-MM-yyyy'));
   const [sessionId, setSessionId] = useState('');
   const [classId, setClassId] = useState('');
   const [sectionId, setSectionId] = useState('');
@@ -29,6 +31,31 @@ export default function StudentAttendancePage() {
     late: 0,
     absent: 0,
     excused: 0,
+  });
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    pageSize,
+    setPageSize,
+    currentPage,
+    setCurrentPage,
+    paginatedData: paginatedReport,
+    totalEntries,
+    totalPages,
+    startIndex,
+    endIndex,
+  } = useTableControls({
+    data: report,
+    initialPageSize: 10,
+    filterFn: (item, q) =>
+      Boolean(
+        item.name?.toLowerCase().includes(q) ||
+        item.studentCode?.toLowerCase().includes(q) ||
+        String(item.roll || '').toLowerCase().includes(q) ||
+        item.status?.toLowerCase().includes(q) ||
+        item.phone?.toLowerCase().includes(q)
+      ),
   });
 
   // Metadata
@@ -106,6 +133,30 @@ export default function StudentAttendancePage() {
   const selectedClassName = classes.find((c) => String(c.id) === classId)?.name || '';
   const selectedSectionName = sections.find((s) => String(s.id) === sectionId)?.name || 'All Sections';
 
+  const displayDateText = useMemo(() => {
+    if (!date) return '';
+    const parseAny = (s: string) => {
+      const match = s.trim().match(/^(\d{2})-(\d{2})-(\d{4})/);
+      if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+      return new Date(s);
+    };
+    if (date.includes(' to ')) {
+      const [start, end] = date.split(' to ');
+      try {
+        return `${format(parseAny(start), 'dd MMM yyyy')} to ${format(parseAny(end), 'dd MMM yyyy')}`;
+      } catch {
+        return date;
+      }
+    }
+    try {
+      const d = parseAny(date);
+      if (isNaN(d.getTime())) return date;
+      return format(d, 'dd MMMM yyyy (EEEE)');
+    } catch {
+      return date;
+    }
+  }, [date]);
+
   return (
     <div className="space-y-6">
       {/* Top Controls */}
@@ -137,11 +188,10 @@ export default function StudentAttendancePage() {
         <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs">
             <div>
-              <input
-                type="date"
+              <FlatpickrCalendar
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                onChange={(val) => setDate(val)}
+                placeholder="Select date..."
               />
             </div>
 
@@ -267,12 +317,23 @@ export default function StudentAttendancePage() {
           </h2>
           <p className="text-xs text-slate-500">{APP_CONFIG.address}</p>
           <div className="mt-2 inline-flex items-center gap-3 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-300">
-            <span>Date: {format(new Date(date), 'dd MMMM yyyy (EEEE)')}</span>
+            <span>Date: {displayDateText}</span>
             <span>•</span>
             <span>Class: {selectedClassName}</span>
             <span>•</span>
             <span>Section: {selectedSectionName}</span>
           </div>
+        </div>
+
+        <div className="print:hidden">
+          <TableTopControls
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            totalEntries={totalEntries}
+            searchPlaceholder="Search student name, roll, code, phone..."
+          />
         </div>
 
         <div className="overflow-x-auto">
@@ -289,7 +350,7 @@ export default function StudentAttendancePage() {
                 <th className="px-3 py-2">Guardian Phone</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-[14px]">
               {loading ? (
                 <tr>
                   <td colSpan={8} className="text-center py-10 text-slate-400">
@@ -297,14 +358,14 @@ export default function StudentAttendancePage() {
                     Loading attendance register...
                   </td>
                 </tr>
-              ) : report.length === 0 ? (
+              ) : paginatedReport.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-10 text-slate-400">
-                    No student records found for this class and date.
+                    {searchTerm ? 'No matching attendance records found.' : 'No student records found for this class and date.'}
                   </td>
                 </tr>
               ) : (
-                report.map((item) => {
+                paginatedReport.map((item) => {
                   const statusInfo = ATTENDANCE_STATUS_LABELS[item.status] || {
                     label: item.status,
                     color: 'bg-slate-100 text-slate-600',
@@ -333,7 +394,7 @@ export default function StudentAttendancePage() {
                       <td className="px-3 py-2.5 font-mono text-slate-700 dark:text-slate-300 border-r">
                         {item.outTime}
                       </td>
-                      <td className="px-3 py-2.5 text-[10px] font-medium text-slate-500 border-r">
+                      <td className="px-3 py-2.5 text-xs font-medium text-slate-500 border-r">
                         {item.source}
                       </td>
                       <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400">
@@ -345,6 +406,17 @@ export default function StudentAttendancePage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="print:hidden">
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalEntries={totalEntries}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
     </div>

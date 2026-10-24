@@ -1,5 +1,6 @@
 'use client';
 
+import { TablePagination, TableTopControls, useTableControls } from '@/components/TableControls';
 import { APP_CONFIG } from '@/lib/constants';
 import { GraduationCap, IdCard, Printer, Search, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -23,6 +24,36 @@ export default function ClassWiseStudentsPage() {
 
   // Print Mode: 'TABLE' or 'ID_CARDS'
   const [printMode, setPrintMode] = useState<'TABLE' | 'ID_CARDS'>('TABLE');
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    pageSize,
+    setPageSize,
+    currentPage,
+    setCurrentPage,
+    paginatedData: paginatedStudents,
+    totalEntries,
+    totalPages,
+    startIndex,
+    endIndex,
+  } = useTableControls({
+    data: students,
+    initialPageSize: 10,
+    filterFn: (s, q) => {
+      const enr = s.enrollments?.[0];
+      return Boolean(
+        s.nameEn?.toLowerCase().includes(q) ||
+        s.nameBn?.toLowerCase().includes(q) ||
+        s.studentCode?.toLowerCase().includes(q) ||
+        String(enr?.roll || '').toLowerCase().includes(q) ||
+        s.guardian?.fatherName?.toLowerCase().includes(q) ||
+        s.guardian?.guardianPhone?.toLowerCase().includes(q) ||
+        s.guardian?.fatherPhone?.toLowerCase().includes(q) ||
+        s.biometricId?.toString().toLowerCase().includes(q)
+      );
+    },
+  });
 
   useEffect(() => {
     async function loadMeta() {
@@ -223,6 +254,17 @@ export default function ClassWiseStudentsPage() {
             </div>
           </div>
 
+          <div className="print:hidden">
+            <TableTopControls
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+              totalEntries={totalEntries}
+              searchPlaceholder="Search student name, roll, code, father..."
+            />
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border border-slate-200 dark:border-slate-800">
               <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 font-bold border-b border-slate-200 dark:border-slate-800 uppercase">
@@ -237,15 +279,21 @@ export default function ClassWiseStudentsPage() {
                   <th className="px-3 py-2">Signature</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-[14px]">
                 {students.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="text-center py-12 text-slate-400">
                       Please select a class and click &apos;Fetch Students&apos;.
                     </td>
                   </tr>
+                ) : paginatedStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-12 text-slate-400">
+                      No matching students found for search.
+                    </td>
+                  </tr>
                 ) : (
-                  students.map((s) => {
+                  paginatedStudents.map((s) => {
                     const enr = s.enrollments?.[0];
                     return (
                       <tr key={s.id} className="hover:bg-slate-50/50">
@@ -277,6 +325,17 @@ export default function ClassWiseStudentsPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="print:hidden">
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalEntries={totalEntries}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              onPageChange={setCurrentPage}
+            />
           </div>
         </div>
       ) : (

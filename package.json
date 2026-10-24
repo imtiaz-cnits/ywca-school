@@ -19,6 +19,7 @@
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "flatpickr": "^4.6.13",
     "jose": "^5.9.6",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.2",

@@ -158,22 +158,19 @@ export function parseShiftCutoff(startTimeStr?: string | null): { cutoffHour: nu
 /**
  * Evaluates whether punch is PRESENT or LATE in Asia/Dhaka
  * Rules:
- *  - On or before cutoff (e.g. <= 08:30) => PRESENT
- *  - After cutoff (e.g. >= 08:31) => LATE
+ *  - On or before cutoff + grace period (e.g. 08:30 + 5 min grace = 08:35) => PRESENT
+ *  - Over 5 minutes after cutoff (e.g. > 08:35) => LATE
  */
 export function evaluateLateness(
   dhakaHour: number,
   dhakaMinute: number,
   cutoffHour = 8,
-  cutoffMinute = 30
+  cutoffMinute = 30,
+  graceMinutes = 5
 ): 'PRESENT' | 'LATE' {
-  if (dhakaHour > cutoffHour) {
-    return 'LATE';
-  }
-  if (dhakaHour === cutoffHour && dhakaMinute > cutoffMinute) {
-    return 'LATE';
-  }
-  return 'PRESENT';
+  const punchMinutes = dhakaHour * 60 + dhakaMinute;
+  const allowedMinutes = cutoffHour * 60 + cutoffMinute + graceMinutes;
+  return punchMinutes > allowedMinutes ? 'LATE' : 'PRESENT';
 }
 
 /**

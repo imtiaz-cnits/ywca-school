@@ -1,5 +1,6 @@
 'use client';
 
+import FlatpickrCalendar from '@/components/FlatpickrCalendar';
 import { BLOOD_GROUPS, RELIGIONS } from '@/lib/constants';
 import {
     ArrowLeft,
@@ -193,12 +194,10 @@ export default function AdmissionPage() {
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Admission Date
               </label>
-              <input
-                type="date"
-                name="admissionDate"
+              <FlatpickrCalendar
                 value={formData.admissionDate}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                onChange={(val) => setFormData((prev) => ({ ...prev, admissionDate: val }))}
+                placeholder="YYYY-MM-DD"
               />
             </div>
 
@@ -373,12 +372,10 @@ export default function AdmissionPage() {
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Date of Birth
               </label>
-              <input
-                type="date"
-                name="dob"
+              <FlatpickrCalendar
                 value={formData.dob}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                onChange={(val) => setFormData((prev) => ({ ...prev, dob: val }))}
+                placeholder="YYYY-MM-DD"
               />
             </div>
 

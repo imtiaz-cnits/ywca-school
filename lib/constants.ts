@@ -1,9 +1,9 @@
 export const APP_CONFIG = {
-  name: 'YWCA Nursery School, Pabna',
+  name: "Young Women's Christian Association (YWCA), Pabna",
   shortName: 'YWCA School',
-  address: 'Dilalpur, Pabna, Bangladesh',
-  phone: '+880 1712-345678',
-  email: 'info@ywcaschoolpabna.edu.bd',
+  address: 'Mission House, Dakshin Raghabpur, Pabna, Bangladesh',
+  phone: '01717644822, 02588845479',
+  email: 'ywca.pabna@yahoo.com',
   developedBy: 'CodeNext IT',
   developerUrl: 'https://www.codenextit.com',
 };

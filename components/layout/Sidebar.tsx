@@ -97,13 +97,13 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'Staff & Teachers',
+    title: 'Staff & Leave',
     viewKey: 'staff',
     icon: Users,
-    description: 'Faculty & staff directories',
+    description: 'Faculty, staff & leave management',
     children: [
-      { title: 'Teachers Directory', href: '/staff/teachers', icon: UserCheck },
-      { title: 'Staff Directory', href: '/staff/general', icon: Users },
+      { title: 'Staff & Teachers', href: '/staff', icon: Users },
+      { title: 'Leave Management', href: '/staff/leave', icon: Calendar },
     ],
   },
   {

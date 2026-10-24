@@ -267,7 +267,7 @@ export default function StudentProfilePage() {
                   <th className="px-4 py-2.5">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-[14px]">
                 {student.enrollments?.map((e: any) => (
                   <tr key={e.id}>
                     <td className="px-4 py-2.5 font-semibold text-slate-800 dark:text-slate-200">

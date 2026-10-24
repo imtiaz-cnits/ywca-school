@@ -1,6 +1,24 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
+function parseDhakaTime(dateStr: string, timeStr?: string): Date | null {
+  if (!timeStr || timeStr === '-' || timeStr.trim() === '') return null;
+  const trimmed = timeStr.trim();
+  const match12 = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+  if (match12) {
+    let hours = parseInt(match12[1], 10);
+    const minutes = parseInt(match12[2], 10);
+    const meridiem = match12[3]?.toUpperCase();
+    if (meridiem === 'PM' && hours < 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+    const hh = String(hours).padStart(2, '0');
+    const mm = String(minutes).padStart(2, '0');
+    return new Date(`${dateStr}T${hh}:${mm}:00+06:00`);
+  }
+  const dateObj = new Date(trimmed);
+  return isNaN(dateObj.getTime()) ? null : dateObj;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -13,7 +31,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const startOfDay = new Date(`${date}T00:00:00.000Z`);
+    let dateStr = String(date);
+    const match = dateStr.match(/^(\d{2})-(\d{2})-(\d{4})/);
+    if (match) {
+      dateStr = `${match[3]}-${match[2]}-${match[1]}`;
+    }
+
+    const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
 
     if (type === 'STUDENT') {
       for (const item of items) {
@@ -44,8 +68,11 @@ export async function POST(request: Request) {
       }
     } else {
       for (const item of items) {
-        const { employeeId, status, remark } = item;
+        const { employeeId, status, remark, inTime, outTime } = item;
         if (!employeeId) continue;
+
+        const inTimeDate = parseDhakaTime(dateStr, inTime);
+        const outTimeDate = parseDhakaTime(dateStr, outTime);
 
         await prisma.employeeAttendance.upsert({
           where: {
@@ -58,13 +85,17 @@ export async function POST(request: Request) {
             employeeId: Number(employeeId),
             date: startOfDay,
             status: status || 'PRESENT',
+            inTime: inTimeDate,
+            outTime: outTimeDate,
             source: 'MANUAL',
             remark: remark || null,
           },
           update: {
             status: status || 'PRESENT',
+            ...(inTime !== undefined ? { inTime: inTimeDate } : {}),
+            ...(outTime !== undefined ? { outTime: outTimeDate } : {}),
             source: 'MANUAL',
-            remark: remark || null,
+            remark: remark !== undefined ? remark : undefined,
           },
         });
       }

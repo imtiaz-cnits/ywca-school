@@ -5,11 +5,16 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const dateStr = searchParams.get('date') || getDhakaAttendanceInfo(new Date()).dateOnlyStr;
+    let dateStr = searchParams.get('date') || getDhakaAttendanceInfo(new Date()).dateOnlyStr;
     const sessionId = searchParams.get('sessionId');
     const classId = searchParams.get('classId');
     const sectionId = searchParams.get('sectionId');
     const shiftId = searchParams.get('shiftId');
+
+    const match = dateStr.match(/^(\d{2})-(\d{2})-(\d{4})/);
+    if (match) {
+      dateStr = `${match[3]}-${match[2]}-${match[1]}`;
+    }
 
     const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
 

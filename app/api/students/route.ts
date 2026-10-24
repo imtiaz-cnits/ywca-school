@@ -125,16 +125,27 @@ export async function POST(request: Request) {
     const count = await prisma.student.count();
     const studentCode = generateStudentCode(count + 1);
 
+    const parseFlexibleDate = (val?: string | null): Date | null => {
+      if (!val) return null;
+      const s = String(val).trim();
+      const dmy = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+      if (dmy) {
+        return new Date(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]));
+      }
+      const dt = new Date(s);
+      return isNaN(dt.getTime()) ? null : dt;
+    };
+
     // Transaction to create Student, Guardian, and Enrollment together
     const result = await prisma.$transaction(async (tx) => {
       const student = await tx.student.create({
         data: {
           studentCode,
           admissionNo: admissionNo.trim(),
-          admissionDate: admissionDate ? new Date(admissionDate) : new Date(),
+          admissionDate: parseFlexibleDate(admissionDate) || new Date(),
           nameEn: nameEn.trim(),
           nameBn: nameBn?.trim() || null,
-          dob: dob ? new Date(dob) : null,
+          dob: parseFlexibleDate(dob),
           gender: gender || 'MALE',
           bloodGroup: bloodGroup || null,
           religion: religion || null,

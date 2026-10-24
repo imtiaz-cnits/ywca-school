@@ -1,5 +1,7 @@
 'use client';
 
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import { TablePagination, TableTopControls, useTableControls } from '@/components/TableControls';
 import { Calendar, CheckCircle2, Edit2, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -11,6 +13,40 @@ export default function SessionsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState('');
   const [isCurrent, setIsCurrent] = useState(false);
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    id: number | null;
+    name: string;
+  }>({
+    isOpen: false,
+    id: null,
+    name: '',
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    pageSize,
+    setPageSize,
+    currentPage,
+    setCurrentPage,
+    paginatedData: paginatedSessions,
+    totalEntries,
+    totalPages,
+    startIndex,
+    endIndex,
+  } = useTableControls({
+    data: sessions,
+    initialPageSize: 10,
+    filterFn: (s, q) =>
+      Boolean(
+        s.name?.toLowerCase().includes(q) ||
+        (s.isCurrent ? 'active current' : '').includes(q)
+      ),
+  });
 
   const fetchSessions = async () => {
     try {
@@ -77,19 +113,23 @@ export default function SessionsPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this academic session?')) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.id) return;
     try {
-      const res = await fetch(`/api/academic/sessions?id=${id}`, { method: 'DELETE' });
+      setDeleteLoading(true);
+      const res = await fetch(`/api/academic/sessions?id=${deleteModal.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok || !data.success) {
         toast.error(data.message || 'Delete failed');
         return;
       }
       toast.success('Session deleted successfully');
+      setDeleteModal({ isOpen: false, id: null, name: '' });
       fetchSessions();
     } catch (error: any) {
       toast.error(error.message || 'Network error');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -115,7 +155,16 @@ export default function SessionsPage() {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm p-4 sm:p-6">
+        <TableTopControls
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          totalEntries={totalEntries}
+          searchPlaceholder="Search session name..."
+        />
+
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider font-semibold">
@@ -124,26 +173,26 @@ export default function SessionsPage() {
                 <th className="px-6 py-3.5">Session Name</th>
                 <th className="px-6 py-3.5">Current Active</th>
                 <th className="px-6 py-3.5">Enrolled Students</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
+                <th className="px-6 py-3.5 text-right whitespace-nowrap min-w-[90px]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-[14px]">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="text-center py-10 text-slate-400">
                     Loading sessions...
                   </td>
                 </tr>
-              ) : sessions.length === 0 ? (
+              ) : paginatedSessions.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-10 text-slate-400">
-                    No academic sessions found. Click &apos;Add New Session&apos; to create one.
+                    {searchTerm ? 'No matching sessions found.' : "No academic sessions found. Click 'Add New Session' to create one."}
                   </td>
                 </tr>
               ) : (
-                sessions.map((item, index) => (
+                paginatedSessions.map((item, index) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                    <td className="px-6 py-4 text-slate-400">{index + 1}</td>
+                    <td className="px-6 py-4 text-slate-400">{startIndex + index}</td>
                     <td className="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200">
                       {item.name}
                     </td>
@@ -153,25 +202,29 @@ export default function SessionsPage() {
                           <CheckCircle2 className="w-3 h-3" /> Active Current
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-[11px]">-</span>
+                        <span className="text-slate-400 text-xs">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                       {item._count?.enrollments || 0} students
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button
-                        onClick={() => openEditModal(item)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                        <button
+                          onClick={() => openEditModal(item)}
+                          title="Edit Session"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 inline-flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteModal({ isOpen: true, id: item.id, name: item.name })}
+                          title="Delete Session"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 inline-flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -179,11 +232,20 @@ export default function SessionsPage() {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalEntries={totalEntries}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 !m-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
             <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">
               {editingId ? 'Edit Academic Session' : 'Create Academic Session'}
@@ -235,6 +297,17 @@ export default function SessionsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, name: '' })}
+        onConfirm={handleConfirmDelete}
+        loading={deleteLoading}
+        title="Delete Academic Session"
+        message="Are you sure you want to delete this academic session? Associated enrollments and records may be affected."
+        itemName={deleteModal.name}
+      />
     </div>
   );
 }

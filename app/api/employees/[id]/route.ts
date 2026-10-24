@@ -7,21 +7,42 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const employee = await prisma.employee.findUnique({
-      where: { id: Number(id) },
-      include: {
-        attendances: {
-          orderBy: { date: 'desc' },
-          take: 30,
+    const numId = Number(id);
+    const [employee, leaves, device] = await Promise.all([
+      prisma.employee.findUnique({
+        where: { id: numId },
+        include: {
+          attendances: {
+            orderBy: { date: 'desc' },
+            take: 30,
+          },
         },
-      },
-    });
+      }),
+      prisma.$queryRawUnsafe<any[]>(`
+        SELECT id, leaveType, duration, leaveAddress, substituteName, department, DATE_FORMAT(startDate, '%Y-%m-%d') as startDate, DATE_FORMAT(endDate, '%Y-%m-%d') as endDate, reason, status, appliedAt 
+        FROM leaves 
+        WHERE employeeId = ${numId} 
+        ORDER BY id DESC LIMIT 20
+      `).catch(() => []),
+      prisma.biometricDevice.findFirst({
+        where: { status: 'active' },
+        select: { ipAddress: true, name: true, port: true },
+      }),
+    ]);
 
     if (!employee) {
       return NextResponse.json({ success: false, message: 'Employee not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, employee });
+    return NextResponse.json({
+      success: true,
+      employee: {
+        ...employee,
+        leaves: leaves || [],
+        deviceIp: device?.ipAddress || '192.168.0.134',
+        deviceName: device?.name || 'Main Gate K60',
+      },
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
@@ -56,7 +77,7 @@ export async function PUT(
       data: {
         name: name ? name.trim() : undefined,
         designation: designation ? designation.trim() : undefined,
-        phone: phone ? phone.trim() : undefined,
+        phone: phone !== undefined ? phone.trim() : undefined,
         email: email !== undefined ? email?.trim() : undefined,
         gender: gender || undefined,
         nid: nid !== undefined ? nid?.trim() : undefined,

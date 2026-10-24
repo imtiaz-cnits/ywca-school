@@ -1,12 +1,14 @@
 'use client';
 
+import FlatpickrCalendar from '@/components/FlatpickrCalendar';
+import { TablePagination, TableTopControls, useTableControls } from '@/components/TableControls';
 import { format } from 'date-fns';
 import { CheckCircle, RefreshCw, Save, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function ManualAttendancePage() {
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [date, setDate] = useState(format(new Date(), 'dd-MM-yyyy'));
   const [sessionId, setSessionId] = useState('');
   const [classId, setClassId] = useState('');
   const [sectionId, setSectionId] = useState('');
@@ -16,6 +18,29 @@ export default function ManualAttendancePage() {
   const [saving, setSaving] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
   const [attendanceMap, setAttendanceMap] = useState<Record<number, string>>({});
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    pageSize,
+    setPageSize,
+    currentPage,
+    setCurrentPage,
+    paginatedData: paginatedStudents,
+    totalEntries,
+    totalPages,
+    startIndex,
+    endIndex,
+  } = useTableControls({
+    data: students,
+    initialPageSize: 10,
+    filterFn: (s, q) =>
+      Boolean(
+        s.name?.toLowerCase().includes(q) ||
+        s.studentCode?.toLowerCase().includes(q) ||
+        String(s.roll || '').toLowerCase().includes(q)
+      ),
+  });
 
   // Metadata
   const [sessions, setSessions] = useState<any[]>([]);
@@ -166,11 +191,10 @@ export default function ManualAttendancePage() {
       <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs">
           <div>
-            <input
-              type="date"
+            <FlatpickrCalendar
               value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              onChange={(val) => setDate(val)}
+              placeholder="Select date..."
             />
           </div>
 
@@ -263,7 +287,16 @@ export default function ManualAttendancePage() {
       )}
 
       {/* Sheet Table */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm p-4 sm:p-6">
+        <TableTopControls
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          totalEntries={totalEntries}
+          searchPlaceholder="Search student name, roll, code..."
+        />
+
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider font-semibold">
@@ -277,15 +310,21 @@ export default function ManualAttendancePage() {
                 <th className="px-6 py-3.5 text-center">Excused</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-[14px]">
               {students.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-slate-400">
                     Select a class and click &apos;Load Students&apos; to take attendance.
                   </td>
                 </tr>
+              ) : paginatedStudents.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-slate-400">
+                    No matching students found.
+                  </td>
+                </tr>
               ) : (
-                students.map((s) => {
+                paginatedStudents.map((s) => {
                   const currentStatus = attendanceMap[s.enrollmentId] || s.status;
                   return (
                     <tr key={s.enrollmentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
@@ -341,6 +380,15 @@ export default function ManualAttendancePage() {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalEntries={totalEntries}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );

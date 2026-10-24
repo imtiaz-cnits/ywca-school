@@ -1,5 +1,6 @@
 'use client';
 
+import ThemeToggle from '@/components/ThemeToggle';
 import { ArrowRight, Loader2, Lock, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -43,36 +44,40 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50/60 to-slate-100 dark:from-slate-950 dark:via-indigo-950/80 dark:to-slate-950 flex items-center justify-center p-4 sm:p-6 relative transition-colors duration-300">
+      {/* Top-Right Light/Dark Mode Theme Switcher */}
+      <div className="fixed top-5 right-5 sm:top-6 sm:right-6 z-50">
+        <ThemeToggle className="bg-white/80 dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-md backdrop-blur-md" />
+      </div>
       <div className="w-full max-w-md">
         {/* Card Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white/10 border border-white/20 p-2 mb-4 shadow-xl shadow-indigo-600/20 backdrop-blur-md">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white dark:bg-white/10 border border-slate-200 dark:border-white/20 p-2 mb-4 shadow-xl shadow-indigo-600/10 dark:shadow-indigo-600/20 backdrop-blur-md">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.svg" alt="YWCA Nursery School Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             YWCA Nursery School
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Pabna, Bangladesh • Management Portal
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-          <h2 className="text-lg font-semibold text-white mb-1">Sign In</h2>
-          <p className="text-xs text-slate-400 mb-6">
+        <div className="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-indigo-950/5 dark:shadow-black/50 backdrop-blur-xl">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Sign In</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
             Enter your email and password to access the portal
           </p>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 Email Address
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
@@ -81,17 +86,17 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@ywcaschool.edu.bd"
                   required
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800/60 border border-slate-700/80 rounded-xl text-white placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -100,7 +105,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800/60 border border-slate-700/80 rounded-xl text-white placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 />
               </div>
             </div>
@@ -108,7 +113,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50"
+              className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 <>
@@ -131,7 +136,7 @@ export default function LoginPage() {
             href="https://www.codenextit.com"
             target="_blank"
             rel="noreferrer"
-            className="text-indigo-400 hover:underline"
+            className="text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             CodeNext IT
           </a>

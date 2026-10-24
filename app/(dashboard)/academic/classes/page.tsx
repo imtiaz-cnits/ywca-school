@@ -1,5 +1,7 @@
 'use client';
 
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import { TablePagination, TableTopControls, useTableControls } from '@/components/TableControls';
 import { Edit2, Plus, School, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -12,6 +14,41 @@ export default function ClassesPage() {
   const [name, setName] = useState('');
   const [numericValue, setNumericValue] = useState('');
   const [order, setOrder] = useState('0');
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    id: number | null;
+    name: string;
+  }>({
+    isOpen: false,
+    id: null,
+    name: '',
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    pageSize,
+    setPageSize,
+    currentPage,
+    setCurrentPage,
+    paginatedData: paginatedClasses,
+    totalEntries,
+    totalPages,
+    startIndex,
+    endIndex,
+  } = useTableControls({
+    data: classes,
+    initialPageSize: 10,
+    filterFn: (c, q) =>
+      Boolean(
+        c.name?.toLowerCase().includes(q) ||
+        (c.numericValue !== null && String(c.numericValue).toLowerCase().includes(q)) ||
+        c.sections?.some((s: any) => s.name?.toLowerCase().includes(q))
+      ),
+  });
 
   const fetchClasses = async () => {
     try {
@@ -82,19 +119,23 @@ export default function ClassesPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this class? All sections under it may be deleted.')) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.id) return;
     try {
-      const res = await fetch(`/api/academic/classes?id=${id}`, { method: 'DELETE' });
+      setDeleteLoading(true);
+      const res = await fetch(`/api/academic/classes?id=${deleteModal.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok || !data.success) {
         toast.error(data.message || 'Delete failed');
         return;
       }
       toast.success('Class deleted successfully');
+      setDeleteModal({ isOpen: false, id: null, name: '' });
       fetchClasses();
     } catch (error: any) {
       toast.error(error.message || 'Network error');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -119,7 +160,16 @@ export default function ClassesPage() {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm p-4 sm:p-6">
+        <TableTopControls
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          totalEntries={totalEntries}
+          searchPlaceholder="Search class name, numeric code..."
+        />
+
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider font-semibold">
@@ -129,26 +179,26 @@ export default function ClassesPage() {
                 <th className="px-6 py-3.5">Numeric Value</th>
                 <th className="px-6 py-3.5">Sections</th>
                 <th className="px-6 py-3.5">Total Students</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
+                <th className="px-6 py-3.5 text-right whitespace-nowrap min-w-[90px]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-[14px]">
               {loading ? (
                 <tr>
                   <td colSpan={6} className="text-center py-10 text-slate-400">
                     Loading classes...
                   </td>
                 </tr>
-              ) : classes.length === 0 ? (
+              ) : paginatedClasses.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-10 text-slate-400">
-                    No classes found. Click &apos;Add New Class&apos; to create one.
+                    {searchTerm ? 'No matching classes found.' : "No classes found. Click 'Add New Class' to create one."}
                   </td>
                 </tr>
               ) : (
-                classes.map((item, index) => (
+                paginatedClasses.map((item, index) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                    <td className="px-6 py-4 text-slate-400">{index + 1}</td>
+                    <td className="px-6 py-4 text-slate-400">{startIndex + index}</td>
                     <td className="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200">
                       {item.name}
                     </td>
@@ -161,19 +211,23 @@ export default function ClassesPage() {
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                       {item._count?.enrollments || 0} students
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button
-                        onClick={() => openEditModal(item)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                        <button
+                          onClick={() => openEditModal(item)}
+                          title="Edit Class"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 inline-flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteModal({ isOpen: true, id: item.id, name: item.name })}
+                          title="Delete Class"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 inline-flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -181,10 +235,19 @@ export default function ClassesPage() {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalEntries={totalEntries}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 !m-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
             <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">
               {editingId ? 'Edit Class' : 'Create Class'}
@@ -250,6 +313,17 @@ export default function ClassesPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, name: '' })}
+        onConfirm={handleConfirmDelete}
+        loading={deleteLoading}
+        title="Delete Class"
+        message="Are you sure you want to delete this class? All sections and associations under it may be affected."
+        itemName={deleteModal.name}
+      />
     </div>
   );
 }

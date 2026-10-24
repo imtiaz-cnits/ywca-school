@@ -51,9 +51,9 @@ export async function POST(request: Request) {
       status,
     } = body;
 
-    if (!name || !designation || !phone) {
+    if (!name || !designation) {
       return NextResponse.json(
-        { success: false, message: 'Name, Designation, and Phone are required.' },
+        { success: false, message: 'Name and Designation are required.' },
         { status: 400 }
       );
     }
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
         name: name.trim(),
         designation: designation.trim(),
         type: empType,
-        phone: phone.trim(),
+        phone: phone ? phone.trim() : '',
         email: email?.trim() || null,
         gender: gender || 'MALE',
         nid: nid?.trim() || null,

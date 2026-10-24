@@ -1,15 +1,17 @@
 'use client';
 
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import { PageSizeOption, TablePagination, TableTopControls } from '@/components/TableControls';
 import {
-    Eye,
-    FileSpreadsheet,
-    Filter,
-    GraduationCap,
-    Phone,
-    Plus,
-    RefreshCw,
-    Search,
-    Trash2,
+  Eye,
+  FileSpreadsheet,
+  Filter,
+  GraduationCap,
+  Phone,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
@@ -22,6 +24,19 @@ export default function StudentsDirectoryPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSizeOption>(10);
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    id: number | null;
+    name: string;
+  }>({
+    isOpen: false,
+    id: null,
+    name: '',
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -67,9 +82,10 @@ export default function StudentsDirectoryPage() {
   const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
+      const limitVal = pageSize === 'all' ? 1000 : Number(pageSize);
       const params = new URLSearchParams();
       params.append('page', String(page));
-      params.append('limit', '25');
+      params.append('limit', String(limitVal));
       if (search) params.append('search', search);
       if (sessionId) params.append('sessionId', sessionId);
       if (classId) params.append('classId', classId);
@@ -88,25 +104,29 @@ export default function StudentsDirectoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, sessionId, classId, sectionId, shiftId]);
+  }, [page, pageSize, search, sessionId, classId, sectionId, shiftId]);
 
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this student record? This cannot be undone.')) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.id) return;
     try {
-      const res = await fetch(`/api/students/${id}`, { method: 'DELETE' });
+      setDeleteLoading(true);
+      const res = await fetch(`/api/students/${deleteModal.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok || !data.success) {
         toast.error(data.message || 'Delete failed');
         return;
       }
       toast.success('Student deleted successfully');
+      setDeleteModal({ isOpen: false, id: null, name: '' });
       fetchStudents();
     } catch (error: any) {
       toast.error(error.message || 'Network error');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -142,6 +162,8 @@ export default function StudentsDirectoryPage() {
     toast.success('Excel file downloaded successfully');
   };
 
+  const currentLimit = pageSize === 'all' ? (total || 1) : Number(pageSize);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -175,8 +197,8 @@ export default function StudentsDirectoryPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm p-4 sm:p-6">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 pb-2">
           <Filter className="w-3.5 h-3.5 text-indigo-600" />
           Filter & Search Students
         </div>
@@ -250,7 +272,22 @@ export default function StudentsDirectoryPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm p-4 sm:p-6">
+        <TableTopControls
+          pageSize={pageSize}
+          onPageSizeChange={(sz) => {
+            setPageSize(sz);
+            setPage(1);
+          }}
+          searchTerm={search}
+          onSearchChange={(val) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          totalEntries={total}
+          searchPlaceholder="Search student name, ID, phone, admission..."
+        />
+
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider font-semibold">
@@ -263,10 +300,10 @@ export default function StudentsDirectoryPage() {
                 <th className="px-6 py-3.5">Roll</th>
                 <th className="px-6 py-3.5">Guardian Phone</th>
                 <th className="px-6 py-3.5">Biometric ID</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
+                <th className="px-6 py-3.5 text-right whitespace-nowrap min-w-[90px]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-[14px]">
               {loading ? (
                 <tr>
                   <td colSpan={9} className="text-center py-10 text-slate-400">
@@ -285,7 +322,7 @@ export default function StudentsDirectoryPage() {
                   const enr = item.enrollments?.[0];
                   return (
                     <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                      <td className="px-6 py-4 text-slate-400">{(page - 1) * 25 + index + 1}</td>
+                      <td className="px-6 py-4 text-slate-400">{(page - 1) * currentLimit + index + 1}</td>
                       <td className="px-6 py-4 font-mono font-medium text-indigo-600 dark:text-indigo-400">
                         {item.studentCode}
                       </td>
@@ -322,21 +359,23 @@ export default function StudentsDirectoryPage() {
                           <span className="text-slate-300 text-[10px]">Not mapped</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <Link
-                          href={`/students/${item.id}`}
-                          title="View Profile & Print ID"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 inline-block transition-colors"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          title="Delete"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                      <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                          <Link
+                            href={`/students/${item.id}`}
+                            title="View Profile & Print ID"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 inline-flex items-center justify-center transition-colors"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </Link>
+                          <button
+                            onClick={() => setDeleteModal({ isOpen: true, id: item.id, name: `${item.nameEn} (${item.studentCode})` })}
+                            title="Delete Student"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 inline-flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -346,31 +385,26 @@ export default function StudentsDirectoryPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="px-6 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-            <span>
-              Page {page} of {totalPages}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40"
-              >
-                Previous
-              </button>
-              <button
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <TablePagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalEntries={total}
+          startIndex={total === 0 ? 0 : (page - 1) * currentLimit + 1}
+          endIndex={pageSize === 'all' ? total : Math.min(page * currentLimit, total)}
+          onPageChange={setPage}
+        />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, name: '' })}
+        onConfirm={handleConfirmDelete}
+        loading={deleteLoading}
+        title="Delete Student Record"
+        message="Are you sure you want to delete this student record? This cannot be undone."
+        itemName={deleteModal.name}
+      />
     </div>
   );
 }

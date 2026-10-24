@@ -1,6 +1,7 @@
 'use client';
 
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
+import ThemeToggle from '@/components/ThemeToggle';
 import { Menu, PanelLeftClose, PanelLeftOpen, Search, User as UserIcon } from 'lucide-react';
 
 interface NavbarProps {
@@ -61,6 +62,9 @@ export default function Navbar({
             className="bg-transparent border-none outline-none w-full text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
           />
         </div>
+
+        {/* Light / Dark Mode Theme Switcher */}
+        <ThemeToggle />
 
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">

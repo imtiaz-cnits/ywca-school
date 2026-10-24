@@ -3,6 +3,8 @@
 import Navbar from '@/components/layout/Navbar';
 import Sidebar from '@/components/layout/Sidebar';
 import { cn } from '@/lib/utils';
+import { ChevronUp } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
 export default function DashboardRootLayout({
@@ -10,9 +12,29 @@ export default function DashboardRootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Always reset scroll to top when navigating to any page
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
+
+  // Monitor scroll position for Scroll-to-Top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 160);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('ywca-sidebar-collapsed');
@@ -82,6 +104,19 @@ export default function DashboardRootLayout({
           </a>
         </footer>
       </div>
+
+      {/* Floating Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          title="Scroll to Top"
+          className="no-print fixed bottom-6 right-6 z-40 p-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-all flex items-center justify-center cursor-pointer animate-in fade-in zoom-in-75 duration-200"
+          aria-label="Scroll to Top"
+        >
+          <ChevronUp className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 }

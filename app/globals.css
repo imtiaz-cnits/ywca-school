@@ -50,8 +50,9 @@
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased min-h-screen font-sans;
+  @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased min-h-screen font-sans;
   font-family: 'Scoutie Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .font-bangla {
@@ -81,7 +82,16 @@ body {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 4mm 4mm 3mm 4mm;
+    margin: 10px !important;
+  }
+
+  body {
+    counter-reset: pageNumber;
+  }
+
+  .print-page-num::before {
+    counter-increment: pageNumber;
+    content: counter(pageNumber);
   }
 
   *, *::before, *::after {
@@ -156,4 +166,105 @@ body {
     page-break-after: always;
     break-after: page;
   }
+
+  .print-status-bw {
+    color: #000000 !important;
+    font-weight: 700 !important;
+  }
+}
+
+/* Flatpickr Modern Custom Styling */
+.flatpickr-calendar {
+  z-index: 99999 !important;
+  font-family: 'Scoutie Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  border-radius: 1rem !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15) !important;
+  background: #ffffff !important;
+  padding: 0.5rem !important;
+  overflow: hidden !important;
+}
+
+.dark .flatpickr-calendar {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.flatpickr-months {
+  padding-bottom: 0.5rem !important;
+}
+
+.flatpickr-current-month {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+}
+
+.dark .flatpickr-current-month {
+  color: #f8fafc !important;
+}
+
+.flatpickr-weekday {
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  color: #64748b !important;
+  text-transform: uppercase !important;
+}
+
+.dark .flatpickr-weekday {
+  color: #94a3b8 !important;
+}
+
+.flatpickr-day {
+  border-radius: 0.65rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  transition: all 0.15s ease !important;
+  border: 1px solid transparent !important;
+}
+
+.dark .flatpickr-day {
+  color: #e2e8f0 !important;
+}
+
+.flatpickr-day:hover {
+  background: #f1f5f9 !important;
+}
+
+.dark .flatpickr-day:hover {
+  background: #1e293b !important;
+}
+
+.flatpickr-day.today {
+  border-color: #6366f1 !important;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+  background: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.25) !important;
+}
+
+.flatpickr-day.inRange {
+  background: #e0e7ff !important;
+  border-color: #e0e7ff !important;
+  color: #4338ca !important;
+}
+
+.dark .flatpickr-day.inRange {
+  background: #312e81 !important;
+  border-color: #312e81 !important;
+  color: #c7d2fe !important;
+}
+
+.flatpickr-calendar.arrowTop:before,
+.flatpickr-calendar.arrowTop:after,
+.flatpickr-calendar.arrowBottom:before,
+.flatpickr-calendar.arrowBottom:after {
+  display: none !important;
 }
