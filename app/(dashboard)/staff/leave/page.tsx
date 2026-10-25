@@ -1,5 +1,6 @@
 'use client';
 
+import CustomSelect from '@/components/CustomSelect';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import FlatpickrCalendar from '@/components/FlatpickrCalendar';
 import { TablePagination, TableTopControls, useTableControls } from '@/components/TableControls';
@@ -1489,17 +1490,18 @@ export default function LeaveManagementPage() {
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   Leave Type (ছুটির ধরন) <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <CustomSelect
                   value={leaveType}
-                  onChange={(e) => setLeaveType(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
-                >
-                  <option value="Casual Leave">Casual Leave (নৈমিত্তিক ছুটি)</option>
-                  <option value="Sick Leave">Sick Leave / Medical (অসুস্থতাজনিত ছুটি)</option>
-                  <option value="Annual Leave">Annual / Earned Leave (বাৎসরিক ছুটি)</option>
-                  <option value="Maternity Leave">Maternity Leave (মাতৃত্বকালীন ছুটি)</option>
-                  <option value="Other Leave">Other Special Leave (অন্যান্য ছুটি)</option>
-                </select>
+                  onChange={(val) => setLeaveType(val)}
+                  options={[
+                    { value: 'Casual Leave', label: 'Casual Leave (নৈমিত্তিক ছুটি)' },
+                    { value: 'Sick Leave', label: 'Sick Leave / Medical (অসুস্থতাজনিত ছুটি)' },
+                    { value: 'Annual Leave', label: 'Annual / Earned Leave (বাৎসরিক ছুটি)' },
+                    { value: 'Maternity Leave', label: 'Maternity Leave (মাতৃত্বকালীন ছুটি)' },
+                    { value: 'Other Leave', label: 'Other Special Leave (অন্যান্য ছুটি)' },
+                  ]}
+                  placeholder="Select Leave Type"
+                />
               </div>
 
               {/* 4. Leave Duration Toggle (Image 2: Full Day(s) vs Half Day) */}

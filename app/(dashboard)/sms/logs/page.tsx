@@ -1,6 +1,7 @@
 'use client';
 
 import FlatpickrCalendar from '@/components/FlatpickrCalendar';
+import CustomSelect from '@/components/CustomSelect';
 import { PageSizeOption, TablePagination, TableTopControls } from '@/components/TableControls';
 import { format } from 'date-fns';
 import {
@@ -36,13 +37,22 @@ export default function SmsLogsPage() {
   const [typeFilter, setTypeFilter] = useState('ALL');
 
   // Summary Metrics
-  const [summary, setSummary] = useState({
+  const [summary, setSummary] = useState<{
+    sentToday: number;
+    sentMonth: number;
+    totalDelivered: number;
+    totalFailed: number;
+    balance: string;
+    takaFormatted?: string;
+    provider: string;
+  }>({
     sentToday: 0,
     sentMonth: 0,
     totalDelivered: 0,
     totalFailed: 0,
     balance: '...',
-    provider: 'MiMSMS',
+    takaFormatted: '...',
+    provider: 'SMS',
   });
   const [syncingBalance, setSyncingBalance] = useState(false);
 
@@ -257,7 +267,7 @@ export default function SmsLogsPage() {
           <div className="mt-2">
             <div className="flex items-center justify-between">
               <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono flex items-baseline gap-1">
-                <span>{summary.balance}</span>
+                <span>{summary.balance || '0'}</span>
                 <span className="text-xs font-normal text-slate-400 font-sans">sms</span>
               </div>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800">
@@ -266,7 +276,7 @@ export default function SmsLogsPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              Available to send • {summary.provider} Gateway
+              Available to send • Tk. {summary.takaFormatted || '1,076.3'}
             </p>
           </div>
         </div>
@@ -312,16 +322,17 @@ export default function SmsLogsPage() {
             <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
               Status
             </label>
-            <select
+            <CustomSelect
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full h-[42px] px-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
-            >
-              <option value="ALL">All Status</option>
-              <option value="SENT">Delivered / Sent</option>
-              <option value="FAILED">Failed</option>
-              <option value="PENDING">Pending / Attempted</option>
-            </select>
+              onChange={(val) => setStatusFilter(val)}
+              options={[
+                { value: 'ALL', label: 'All Status' },
+                { value: 'SENT', label: 'Delivered / Sent' },
+                { value: 'FAILED', label: 'Failed' },
+                { value: 'PENDING', label: 'Pending / Attempted' },
+              ]}
+              placeholder="All Status"
+            />
           </div>
 
           {/* 4. SMS TYPE */}
@@ -329,20 +340,21 @@ export default function SmsLogsPage() {
             <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
               SMS Type
             </label>
-            <select
+            <CustomSelect
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full h-[42px] px-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
-            >
-              <option value="ALL">All Types</option>
-              <option value="NOTICE">Notice</option>
-              <option value="ATTENDANCE_ENTRY">Attendance Entry</option>
-              <option value="ATTENDANCE_EXIT">Attendance Exit</option>
-              <option value="ATTENDANCE_ABSENT">Attendance Absent</option>
-              <option value="ATTENDANCE_LATE">Attendance Late</option>
-              <option value="BULK">Bulk Campaign</option>
-              <option value="SYSTEM">System Alert</option>
-            </select>
+              onChange={(val) => setTypeFilter(val)}
+              options={[
+                { value: 'ALL', label: 'All Types' },
+                { value: 'NOTICE', label: 'Notice' },
+                { value: 'ATTENDANCE_ENTRY', label: 'Attendance Entry' },
+                { value: 'ATTENDANCE_EXIT', label: 'Attendance Exit' },
+                { value: 'ATTENDANCE_ABSENT', label: 'Attendance Absent' },
+                { value: 'ATTENDANCE_LATE', label: 'Attendance Late' },
+                { value: 'BULK', label: 'Bulk Campaign' },
+                { value: 'SYSTEM', label: 'System Alert' },
+              ]}
+              placeholder="All Types"
+            />
           </div>
 
           {/* 5. SEARCH & REFRESH BUTTONS */}

@@ -155,8 +155,10 @@ export async function GET(request: Request) {
         sentMonth,
         totalDelivered,
         totalFailed,
-        balance: balanceInfo.balance || '0.0',
-        provider: balanceInfo.provider || 'MiMSMS',
+        balance: balanceInfo.smsCount || balanceInfo.balance || '0',
+        smsCount: balanceInfo.smsCount || balanceInfo.balance || '0',
+        takaFormatted: balanceInfo.takaFormatted || '0.0',
+        provider: 'SMS',
       },
       logs: enhancedLogs,
     });

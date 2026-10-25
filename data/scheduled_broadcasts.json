@@ -1,0 +1,78 @@
+[
+  {
+    "title": "Notice Broadcast - Oct 25, 2026",
+    "message": "sxdfsdf sfs def s test",
+    "recipientCount": 1,
+    "recipientType": "CUSTOM",
+    "recipients": [
+      "8801326530330"
+    ],
+    "encoding": "GSM",
+    "segments": 1,
+    "scheduledAt": "2026-10-25T09:08:00.000Z",
+    "status": "COMPLETED",
+    "id": "833491ca-5497-4f1e-80f0-d1dc8e5e1772",
+    "createdAt": "2026-10-25T09:05:12.464Z"
+  },
+  {
+    "title": "Notice Broadcast - Oct 25, 2026",
+    "message": "SCHEDULED BROADCASTS",
+    "recipientCount": 1,
+    "recipientType": "CUSTOM",
+    "recipients": [
+      "8801326530330"
+    ],
+    "encoding": "GSM",
+    "segments": 1,
+    "scheduledAt": "2026-10-25T09:49:00.000Z",
+    "status": "CANCELLED",
+    "id": "61bc83f0-66f2-427f-aab5-2bff98fdd4d7",
+    "createdAt": "2026-10-25T08:48:38.036Z"
+  },
+  {
+    "title": "Notice Broadcast - Oct 25, 2026",
+    "message": "শিডিউল লিস্টের প্রতি লাইনে এবং ভিউ ডিটেইলস মোডালে একটি \"Send Now\" বাটন যুক্ত করা হয়েছে, যাতে চাইলে যেকোনো পেন্ডিং শিডিউল সময় আসার আগেই তাৎক্ষণিক পাঠিয়ে দেওয়া যায়।",
+    "recipientCount": 1,
+    "recipientType": "CUSTOM",
+    "recipients": [
+      "8801326530330"
+    ],
+    "encoding": "Unicode",
+    "segments": 3,
+    "scheduledAt": "2026-10-25T09:40:00.000Z",
+    "status": "COMPLETED",
+    "id": "db05351e-749f-45ba-9c41-28c47c76dc3c",
+    "createdAt": "2026-10-25T08:38:26.181Z"
+  },
+  {
+    "title": "Notice Broadcast - Oct 25, 2026",
+    "message": "test massage",
+    "recipientCount": 1,
+    "recipientType": "CUSTOM",
+    "recipients": [
+      "8801326530330"
+    ],
+    "encoding": "GSM",
+    "segments": 1,
+    "scheduledAt": "2026-10-25T08:56:00.000Z",
+    "status": "COMPLETED",
+    "id": "50edcd54-2e20-431e-be0b-079231524024",
+    "createdAt": "2026-10-25T07:54:36.766Z"
+  },
+  {
+    "id": "a0ca880a-3031-43d7-9d91-9931f01e54d6",
+    "title": "Notice Broadcast - Oct 22, 2026 10:55 PM",
+    "message": "আগামী ২৪ অক্টোবর, ২০২৬ তারিখে স্কুলের পিকনিক অনুষ্ঠিত হবে। সকল শিক্ষার্থীকে সময়মতো উপস্থিত থাকার অনুরোধ করা হলো।",
+    "recipientCount": 2,
+    "recipientType": "CUSTOM",
+    "recipients": [
+      "01711223344",
+      "01822334455"
+    ],
+    "encoding": "Unicode",
+    "segments": 1,
+    "scheduledAt": "2026-10-22T22:55:00.000Z",
+    "status": "COMPLETED",
+    "createdAt": "2026-10-22T22:50:00.000Z"
+  }
+]

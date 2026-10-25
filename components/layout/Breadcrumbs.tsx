@@ -23,10 +23,10 @@ const ROUTE_MAP: Record<string, { label: string; parent?: { label: string; href?
   '/students/class-wise': { label: 'Class-Wise List & ID Cards', parent: { label: 'Student Management', href: '/students' } },
 
   // Attendance
-  '/attendance/live': { label: 'Live Punch Monitor', parent: { label: 'Attendance (ZKTeco)', href: '/attendance/live' } },
-  '/attendance/students': { label: 'Student Attendance Register', parent: { label: 'Attendance (ZKTeco)', href: '/attendance/students' } },
-  '/attendance/staff': { label: 'Staff Attendance Register', parent: { label: 'Attendance (ZKTeco)', href: '/attendance/staff' } },
-  '/attendance/manual': { label: 'Manual Sheet Entry', parent: { label: 'Attendance (ZKTeco)', href: '/attendance/manual' } },
+  '/attendance/live': { label: 'Live Punch Monitor', parent: { label: 'Attendance', href: '/attendance/live' } },
+  '/attendance/students': { label: 'Student Attendance Register', parent: { label: 'Attendance', href: '/attendance/students' } },
+  '/attendance/staff': { label: 'Staff Attendance Register', parent: { label: 'Attendance', href: '/attendance/staff' } },
+  '/attendance/manual': { label: 'Manual Sheet Entry', parent: { label: 'Attendance', href: '/attendance/manual' } },
 
   // Staff
   '/staff/teachers': { label: 'Teachers Directory', parent: { label: 'Staff & Teachers', href: '/staff/teachers' } },

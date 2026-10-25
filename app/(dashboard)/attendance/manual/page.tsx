@@ -1,5 +1,6 @@
 'use client';
 
+import CustomSelect from '@/components/CustomSelect';
 import FlatpickrCalendar from '@/components/FlatpickrCalendar';
 import { TablePagination, TableTopControls, useTableControls } from '@/components/TableControls';
 import { format } from 'date-fns';
@@ -198,59 +199,56 @@ export default function ManualAttendancePage() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={sessionId}
-            onChange={(e) => setSessionId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          >
-            <option value="">Select Session</option>
-            {sessions.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setSessionId(val)}
+            options={[
+              { value: '', label: 'Select Session' },
+              ...sessions.map((s) => ({
+                value: String(s.id),
+                label: s.name,
+              })),
+            ]}
+            placeholder="Select Session"
+          />
 
-          <select
+          <CustomSelect
             value={classId}
-            onChange={(e) => setClassId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          >
-            <option value="">Select Class</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => {
+              setClassId(val);
+              setSectionId('');
+            }}
+            options={[
+              { value: '', label: 'Select Class' },
+              ...classes.map((c) => ({ value: String(c.id), label: c.name })),
+            ]}
+            placeholder="Select Class"
+          />
 
-          <select
+          <CustomSelect
             value={sectionId}
-            onChange={(e) => setSectionId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          >
-            <option value="">All Sections</option>
-            {sections
-              .filter((sec) => !classId || sec.classId === Number(classId))
-              .map((sec) => (
-                <option key={sec.id} value={sec.id}>
-                  {sec.name}
-                </option>
-              ))}
-          </select>
+            onChange={(val) => setSectionId(val)}
+            options={[
+              { value: '', label: 'All Sections' },
+              ...sections
+                .filter((sec) => !classId || sec.classId === Number(classId))
+                .map((sec) => ({
+                  value: String(sec.id),
+                  label: sec.name,
+                })),
+            ]}
+            placeholder="All Sections"
+          />
 
-          <select
+          <CustomSelect
             value={shiftId}
-            onChange={(e) => setShiftId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          >
-            <option value="">All Shifts</option>
-            {shifts.map((sh) => (
-              <option key={sh.id} value={sh.id}>
-                {sh.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setShiftId(val)}
+            options={[
+              { value: '', label: 'All Shifts' },
+              ...shifts.map((sh) => ({ value: String(sh.id), label: sh.name })),
+            ]}
+            placeholder="All Shifts"
+          />
 
           <button
             onClick={handleFetchSheet}

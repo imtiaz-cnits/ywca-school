@@ -71,7 +71,7 @@ export default function DashboardPage() {
             YWCA Nursery School Dashboard
           </h1>
           <p className="text-indigo-100 text-xs sm:text-sm mt-1 max-w-xl">
-            Real-time biometric attendance, automated Greenweb SMS alerts, and student record management.
+            Real-time biometric attendance, automated SMS alerts, and student record management.
           </p>
         </div>
 
@@ -162,7 +162,7 @@ export default function DashboardPage() {
               {stats?.sms?.balance || 'Active'}
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              Greenweb SMS Provider
+              Automated SMS Gateway
             </p>
           </div>
         </div>

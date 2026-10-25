@@ -1,5 +1,6 @@
 'use client';
 
+import CustomSelect from '@/components/CustomSelect';
 import FlatpickrCalendar from '@/components/FlatpickrCalendar';
 import { BLOOD_GROUPS, RELIGIONS } from '@/lib/constants';
 import {
@@ -205,80 +206,66 @@ export default function AdmissionPage() {
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Academic Session <span className="text-rose-500">*</span>
               </label>
-              <select
-                name="sessionId"
+              <CustomSelect
                 value={formData.sessionId}
-                onChange={handleChange}
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              >
-                <option value="">Select Session</option>
-                {sessions.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} {s.isCurrent ? '(Current)' : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData((prev) => ({ ...prev, sessionId: val }))}
+                options={[
+                  { value: '', label: 'Select Session' },
+                  ...sessions.map((s) => ({
+                    value: String(s.id),
+                    label: `${s.name} ${s.isCurrent ? '(Current)' : ''}`,
+                  })),
+                ]}
+                placeholder="Select Session"
+              />
             </div>
 
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Class <span className="text-rose-500">*</span>
               </label>
-              <select
-                name="classId"
+              <CustomSelect
                 value={formData.classId}
-                onChange={handleChange}
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              >
-                <option value="">Select Class</option>
-                {classes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData((prev) => ({ ...prev, classId: val, sectionId: '' }))}
+                options={[
+                  { value: '', label: 'Select Class' },
+                  ...classes.map((c) => ({ value: String(c.id), label: c.name })),
+                ]}
+                placeholder="Select Class"
+              />
             </div>
 
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Section <span className="text-rose-500">*</span>
               </label>
-              <select
-                name="sectionId"
+              <CustomSelect
                 value={formData.sectionId}
-                onChange={handleChange}
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              >
-                <option value="">Select Section</option>
-                {filteredSections.map((sec) => (
-                  <option key={sec.id} value={sec.id}>
-                    {sec.name} ({sec.class?.name})
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData((prev) => ({ ...prev, sectionId: val }))}
+                options={[
+                  { value: '', label: 'Select Section' },
+                  ...filteredSections.map((sec) => ({
+                    value: String(sec.id),
+                    label: `${sec.name} (${sec.class?.name || ''})`,
+                  })),
+                ]}
+                placeholder="Select Section"
+              />
             </div>
 
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Shift <span className="text-rose-500">*</span>
               </label>
-              <select
-                name="shiftId"
+              <CustomSelect
                 value={formData.shiftId}
-                onChange={handleChange}
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              >
-                <option value="">Select Shift</option>
-                {shifts.map((sh) => (
-                  <option key={sh.id} value={sh.id}>
-                    {sh.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData((prev) => ({ ...prev, shiftId: val }))}
+                options={[
+                  { value: '', label: 'Select Shift' },
+                  ...shifts.map((sh) => ({ value: String(sh.id), label: sh.name })),
+                ]}
+                placeholder="Select Shift"
+              />
             </div>
 
             <div>
@@ -300,19 +287,15 @@ export default function AdmissionPage() {
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Academic Group (Optional)
               </label>
-              <select
-                name="groupId"
+              <CustomSelect
                 value={formData.groupId}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              >
-                <option value="">None / General</option>
-                {groups.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData((prev) => ({ ...prev, groupId: val }))}
+                options={[
+                  { value: '', label: 'None / General' },
+                  ...groups.map((g) => ({ value: String(g.id), label: g.name })),
+                ]}
+                placeholder="None / General"
+              />
             </div>
 
             <div>
@@ -383,53 +366,43 @@ export default function AdmissionPage() {
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Gender
               </label>
-              <select
-                name="gender"
+              <CustomSelect
                 value={formData.gender}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              >
-                <option value="MALE">Male (ছাত্র)</option>
-                <option value="FEMALE">Female (ছাত্রী)</option>
-                <option value="OTHER">Other</option>
-              </select>
+                onChange={(val) => setFormData((prev) => ({ ...prev, gender: val }))}
+                options={[
+                  { value: 'MALE', label: 'Male (ছাত্র)' },
+                  { value: 'FEMALE', label: 'Female (ছাত্রী)' },
+                  { value: 'OTHER', label: 'Other' },
+                ]}
+                placeholder="Select Gender"
+              />
             </div>
 
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Blood Group
               </label>
-              <select
-                name="bloodGroup"
+              <CustomSelect
                 value={formData.bloodGroup}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              >
-                <option value="">Select Blood Group</option>
-                {BLOOD_GROUPS.map((bg) => (
-                  <option key={bg} value={bg}>
-                    {bg}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData((prev) => ({ ...prev, bloodGroup: val }))}
+                options={[
+                  { value: '', label: 'Select Blood Group' },
+                  ...BLOOD_GROUPS.map((bg) => ({ value: bg, label: bg })),
+                ]}
+                placeholder="Select Blood Group"
+              />
             </div>
 
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Religion
               </label>
-              <select
-                name="religion"
+              <CustomSelect
                 value={formData.religion}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              >
-                {RELIGIONS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData((prev) => ({ ...prev, religion: val }))}
+                options={RELIGIONS.map((r) => ({ value: r, label: r }))}
+                placeholder="Select Religion"
+              />
             </div>
 
             <div>

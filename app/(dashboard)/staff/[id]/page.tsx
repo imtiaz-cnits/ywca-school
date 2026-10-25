@@ -1,5 +1,6 @@
 'use client';
 
+import CustomSelect from '@/components/CustomSelect';
 import { ATTENDANCE_STATUS_LABELS } from '@/lib/constants';
 import { format } from 'date-fns';
 import {
@@ -806,14 +807,15 @@ export default function StaffProfilePage() {
                     <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">
                       Employee Type *
                     </label>
-                    <select
+                    <CustomSelect
                       value={editFormData.type}
-                      onChange={(e) => setEditFormData({ ...editFormData, type: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    >
-                      <option value="TEACHER">Teacher</option>
-                      <option value="STAFF">General Staff</option>
-                    </select>
+                      onChange={(val) => setEditFormData({ ...editFormData, type: val })}
+                      options={[
+                        { value: 'TEACHER', label: 'Teacher' },
+                        { value: 'STAFF', label: 'General Staff' },
+                      ]}
+                      placeholder="Select Type"
+                    />
                   </div>
 
                   <div>
@@ -848,14 +850,15 @@ export default function StaffProfilePage() {
                     <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">
                       Status
                     </label>
-                    <select
+                    <CustomSelect
                       value={editFormData.status}
-                      onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
+                      onChange={(val) => setEditFormData({ ...editFormData, status: val })}
+                      options={[
+                        { value: 'active', label: 'Active' },
+                        { value: 'inactive', label: 'Inactive' },
+                      ]}
+                      placeholder="Select Status"
+                    />
                   </div>
                 </div>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import CustomSelect from '@/components/CustomSelect';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { TablePagination, TableTopControls, useTableControls } from '@/components/TableControls';
 import { Edit2, Layers, Plus, Trash2 } from 'lucide-react';
@@ -275,19 +276,18 @@ export default function SectionsPage() {
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Select Class
                 </label>
-                <select
+                <CustomSelect
                   value={classId}
-                  onChange={(e) => setClassId(e.target.value)}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  <option value="">Select a Class</option>
-                  {classes.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setClassId(val)}
+                  options={[
+                    { value: '', label: 'Select a Class' },
+                    ...classes.map((c) => ({
+                      value: String(c.id),
+                      label: c.name,
+                    })),
+                  ]}
+                  placeholder="Select a Class"
+                />
               </div>
 
               <div>

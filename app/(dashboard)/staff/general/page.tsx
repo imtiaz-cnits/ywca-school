@@ -1,5 +1,6 @@
 'use client';
 
+import CustomSelect from '@/components/CustomSelect';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { TablePagination, TableTopControls, useTableControls } from '@/components/TableControls';
 import { Edit2, Fingerprint, Phone, Plus, Trash2, User, Users } from 'lucide-react';
@@ -367,15 +368,16 @@ export default function GeneralStaffPage() {
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Gender
                   </label>
-                  <select
+                  <CustomSelect
                     value={formData.gender}
-                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  >
-                    <option value="MALE">Male</option>
-                    <option value="FEMALE">Female</option>
-                    <option value="OTHER">Other</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, gender: val })}
+                    options={[
+                      { value: 'MALE', label: 'Male' },
+                      { value: 'FEMALE', label: 'Female' },
+                      { value: 'OTHER', label: 'Other' },
+                    ]}
+                    placeholder="Select Gender"
+                  />
                 </div>
               </div>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import CustomSelect from '@/components/CustomSelect';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { TablePagination, TableTopControls, useTableControls } from '@/components/TableControls';
 import {
@@ -546,20 +547,21 @@ export default function StaffAndTeachersPage() {
                   <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">
                     Employee Type *
                   </label>
-                  <select
+                  <CustomSelect
                     value={formData.type}
-                    onChange={(e) =>
+                    onChange={(val) =>
                       setFormData({
                         ...formData,
-                        type: e.target.value,
-                        designation: e.target.value === 'TEACHER' ? 'Assistant Teacher' : 'Office Assistant',
+                        type: val,
+                        designation: val === 'TEACHER' ? 'Assistant Teacher' : 'Office Assistant',
                       })
                     }
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  >
-                    <option value="TEACHER">Teacher</option>
-                    <option value="STAFF">General Staff</option>
-                  </select>
+                    options={[
+                      { value: 'TEACHER', label: 'Teacher' },
+                      { value: 'STAFF', label: 'General Staff' },
+                    ]}
+                    placeholder="Select Type"
+                  />
                 </div>
 
                 <div>
@@ -595,14 +597,15 @@ export default function StaffAndTeachersPage() {
                   <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">
                     Status
                   </label>
-                  <select
+                  <CustomSelect
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, status: val })}
+                    options={[
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                    ]}
+                    placeholder="Select Status"
+                  />
                 </div>
               </div>
 
@@ -625,14 +628,15 @@ export default function StaffAndTeachersPage() {
                   <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">
                     Gender
                   </label>
-                  <select
+                  <CustomSelect
                     value={formData.gender}
-                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  >
-                    <option value="FEMALE">Female</option>
-                    <option value="MALE">Male</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, gender: val })}
+                    options={[
+                      { value: 'FEMALE', label: 'Female' },
+                      { value: 'MALE', label: 'Male' },
+                    ]}
+                    placeholder="Select Gender"
+                  />
                 </div>
               </div>
 

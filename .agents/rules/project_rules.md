@@ -52,7 +52,7 @@ These instructions define the architectural, styling, database, hardware, and wo
 
 ---
 
-## 5. 📱 Greenweb SMS Gateway Rules
+## 5. 📱 Automated SMS Gateway Rules
 * **Phone Number Formatting:** Always normalize Bangladeshi phone numbers to international standard (`8801XXXXXXXXX`) using `normalizePhoneNumber()` in `@/lib/sms.ts`.
 * **Character Limits:**
   - English: 160 characters = 1 SMS.

@@ -1,5 +1,6 @@
 'use client';
 
+import CustomSelect from '@/components/CustomSelect';
 import { CheckCircle2, RefreshCw, Save, Search, UserCheck } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -201,76 +202,69 @@ export default function ReAdmissionPage() {
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   New Academic Session <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <CustomSelect
                   value={sessionId}
-                  onChange={(e) => setSessionId(e.target.value)}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  <option value="">Select Session</option>
-                  {sessions.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} {s.isCurrent ? '(Current)' : ''}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSessionId(val)}
+                  options={[
+                    { value: '', label: 'Select Session' },
+                    ...sessions.map((s) => ({
+                      value: String(s.id),
+                      label: `${s.name} ${s.isCurrent ? '(Current)' : ''}`,
+                    })),
+                  ]}
+                  placeholder="Select Session"
+                />
               </div>
 
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   New Class <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <CustomSelect
                   value={classId}
-                  onChange={(e) => setClassId(e.target.value)}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  <option value="">Select Class</option>
-                  {classes.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => {
+                    setClassId(val);
+                    setSectionId('');
+                  }}
+                  options={[
+                    { value: '', label: 'Select Class' },
+                    ...classes.map((c) => ({ value: String(c.id), label: c.name })),
+                  ]}
+                  placeholder="Select Class"
+                />
               </div>
 
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   New Section <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <CustomSelect
                   value={sectionId}
-                  onChange={(e) => setSectionId(e.target.value)}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  <option value="">Select Section</option>
-                  {filteredSections.map((sec) => (
-                    <option key={sec.id} value={sec.id}>
-                      {sec.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSectionId(val)}
+                  options={[
+                    { value: '', label: 'Select Section' },
+                    ...filteredSections.map((sec) => ({
+                      value: String(sec.id),
+                      label: sec.name,
+                    })),
+                  ]}
+                  placeholder="Select Section"
+                />
               </div>
 
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Shift <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <CustomSelect
                   value={shiftId}
-                  onChange={(e) => setShiftId(e.target.value)}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  <option value="">Select Shift</option>
-                  {shifts.map((sh) => (
-                    <option key={sh.id} value={sh.id}>
-                      {sh.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setShiftId(val)}
+                  options={[
+                    { value: '', label: 'Select Shift' },
+                    ...shifts.map((sh) => ({ value: String(sh.id), label: sh.name })),
+                  ]}
+                  placeholder="Select Shift"
+                />
               </div>
 
               <div>

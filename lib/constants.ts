@@ -63,7 +63,7 @@ export const NAV_ITEMS = [
     ],
   },
   {
-    title: 'Attendance (ZKTeco)',
+    title: 'Attendance',
     icon: 'Fingerprint',
     children: [
       { title: 'Live Punch Monitor', href: '/attendance/live' },
@@ -85,7 +85,6 @@ export const NAV_ITEMS = [
     icon: 'MessageSquare',
     children: [
       { title: 'Send Bulk SMS', href: '/sms/send' },
-      { title: 'SMS History & Logs', href: '/sms/logs' },
     ],
   },
   {

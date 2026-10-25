@@ -85,7 +85,7 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'Attendance (ZKTeco)',
+    title: 'Attendance',
     viewKey: 'attendance',
     icon: Fingerprint,
     description: 'Biometric punches & logs',
@@ -110,10 +110,9 @@ const navSections: NavSection[] = [
     title: 'SMS Management',
     viewKey: 'sms',
     icon: MessageSquare,
-    description: 'Greenweb alerts & notices',
+    description: 'Broadcast alerts & notices',
     children: [
       { title: 'Send Bulk SMS', href: '/sms/send', icon: Send },
-      { title: 'SMS History & Logs', href: '/sms/logs', icon: History },
     ],
   },
   {

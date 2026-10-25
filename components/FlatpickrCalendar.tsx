@@ -2,8 +2,10 @@
 
 import {
   Calendar as CalendarIcon,
+  Check,
   ChevronLeft,
   ChevronRight,
+  Clock,
   RotateCcw,
   X,
 } from 'lucide-react';
@@ -19,6 +21,7 @@ interface FlatpickrCalendarProps {
   disabled?: boolean;
   dateFormat?: string;
   allowClear?: boolean;
+  showTime?: boolean;
 }
 
 const MONTH_NAMES = [
@@ -53,29 +56,40 @@ const MONTH_SHORT = [
 
 const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-// Parse date string (supports both DD-MM-YYYY and YYYY-MM-DD)
+// Parse date string (supports DD-MM-YYYY, DD/MM/YYYY, with optional hh:mm AM/PM, or ISO)
 function parseAnyDate(str?: string): Date | null {
   if (!str) return null;
   const s = str.trim();
-  // 1. Try DD-MM-YYYY or DD/MM/YYYY
-  const dmy = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  // 1. Try DD-MM-YYYY or DD/MM/YYYY with optional time
+  const dmy = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[,\s]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?\s*(AM|PM)?)?/i);
   if (dmy) {
     const d = parseInt(dmy[1], 10);
     const m = parseInt(dmy[2], 10) - 1;
     const y = parseInt(dmy[3], 10);
-    const dt = new Date(y, m, d);
+    let hr = dmy[4] !== undefined ? parseInt(dmy[4], 10) : 0;
+    const min = dmy[5] !== undefined ? parseInt(dmy[5], 10) : 0;
+    const ampm = dmy[7] ? dmy[7].toUpperCase() : null;
+    if (ampm === 'PM' && hr < 12) hr += 12;
+    if (ampm === 'AM' && hr === 12) hr = 0;
+    const dt = new Date(y, m, d, hr, min);
     return isNaN(dt.getTime()) ? null : dt;
   }
-  // 2. Try YYYY-MM-DD or YYYY/MM/DD
-  const ymd = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  // 2. Try YYYY-MM-DD or YYYY-MM-DDTHH:mm
+  const ymd = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?\s*(AM|PM)?)?/i);
   if (ymd) {
     const y = parseInt(ymd[1], 10);
     const m = parseInt(ymd[2], 10) - 1;
     const d = parseInt(ymd[3], 10);
-    const dt = new Date(y, m, d);
+    let hr = ymd[4] !== undefined ? parseInt(ymd[4], 10) : 0;
+    const min = ymd[5] !== undefined ? parseInt(ymd[5], 10) : 0;
+    const ampm = ymd[7] ? ymd[7].toUpperCase() : null;
+    if (ampm === 'PM' && hr < 12) hr += 12;
+    if (ampm === 'AM' && hr === 12) hr = 0;
+    const dt = new Date(y, m, d, hr, min);
     return isNaN(dt.getTime()) ? null : dt;
   }
-  return null;
+  const dt = new Date(s);
+  return isNaN(dt.getTime()) ? null : dt;
 }
 
 // Strict standard format: DD-MM-YYYY (e.g. 24-10-2026)
@@ -86,8 +100,22 @@ function formatDMY(date: Date): string {
   return `${d}-${m}-${y}`;
 }
 
-// Convert any input value to display formatted DD-MM-YYYY (or range DD-MM-YYYY to DD-MM-YYYY)
-function toDisplayFormat(val?: string): string {
+// Strict standard format with Time: DD-MM-YYYY hh:mm AM/PM (e.g. 25-10-2026 02:53 PM)
+function formatDMYTime(date: Date): string {
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  let hr = date.getHours();
+  const ampm = hr >= 12 ? 'PM' : 'AM';
+  hr = hr % 12;
+  if (hr === 0) hr = 12;
+  const hrStr = String(hr).padStart(2, '0');
+  const minStr = String(date.getMinutes()).padStart(2, '0');
+  return `${d}-${m}-${y} ${hrStr}:${minStr} ${ampm}`;
+}
+
+// Convert any input value to display formatted
+function toDisplayFormat(val?: string, showTime?: boolean): string {
   if (!val) return '';
   if (val.includes(' to ')) {
     const parts = val.split(' to ');
@@ -98,17 +126,19 @@ function toDisplayFormat(val?: string): string {
     return val;
   }
   const dt = parseAnyDate(val);
-  return dt ? formatDMY(dt) : val;
+  if (!dt) return val;
+  return showTime ? formatDMYTime(dt) : formatDMY(dt);
 }
 
 export default function FlatpickrCalendar({
   value,
   onChange,
-  placeholder = 'DD-MM-YYYY',
+  placeholder,
   mode = 'single',
   className = '',
   disabled = false,
   allowClear = false,
+  showTime = false,
 }: FlatpickrCalendarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -151,11 +181,33 @@ export default function FlatpickrCalendar({
     setMounted(true);
   }, []);
 
+  // Helper to extract 12-hour format
+  const getHour12 = (dt: Date) => {
+    let h = dt.getHours() % 12;
+    return h === 0 ? 12 : h;
+  };
+
+  const initialTimeDate = initialSingle || new Date();
+  const [selectedDayDate, setSelectedDayDate] = useState<Date | null>(initialSingle);
+  const [selectedHour, setSelectedHour] = useState<number>(getHour12(initialTimeDate));
+  const [selectedMinute, setSelectedMinute] = useState<number>(initialTimeDate.getMinutes());
+  const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>(initialTimeDate.getHours() >= 12 ? 'PM' : 'AM');
+
+  const buildFullDateTime = (dateObj: Date, hour12: number, minute: number, period: 'AM' | 'PM'): Date => {
+    let h = hour12 % 12;
+    if (period === 'PM') h += 12;
+    return new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), h, minute, 0);
+  };
+
   // Sync internal view when value changes externally
   useEffect(() => {
     if (mode === 'single') {
       const parsed = parseAnyDate(value);
       if (parsed) {
+        setSelectedDayDate(parsed);
+        setSelectedHour(getHour12(parsed));
+        setSelectedMinute(parsed.getMinutes());
+        setSelectedPeriod(parsed.getHours() >= 12 ? 'PM' : 'AM');
         setCurrentYear(parsed.getFullYear());
         setCurrentMonth(parsed.getMonth());
         setYearBase(parsed.getFullYear());
@@ -199,9 +251,10 @@ export default function FlatpickrCalendar({
     }
 
     let top = rect.bottom + 6;
+    const estHeight = showTime ? 430 : 370;
     // If not enough vertical space below, flip above
-    if (top + 370 > window.innerHeight && rect.top > 380) {
-      top = Math.max(padding, rect.top - 370);
+    if (top + estHeight > window.innerHeight && rect.top > estHeight + 10) {
+      top = Math.max(padding, rect.top - estHeight);
     }
 
     setCoords({ top, left });
@@ -296,12 +349,19 @@ export default function FlatpickrCalendar({
     }
   };
 
-  // Day click handler -> Outputs DD-MM-YYYY
+  // Day click handler -> Outputs DD-MM-YYYY or DD-MM-YYYY hh:mm AM/PM
   const handleDayClick = (dayDate: Date) => {
     if (mode === 'single') {
-      const formatted = formatDMY(dayDate);
-      onChange(formatted);
-      handleClose();
+      setSelectedDayDate(dayDate);
+      if (showTime) {
+        const fullDt = buildFullDateTime(dayDate, selectedHour, selectedMinute, selectedPeriod);
+        onChange(formatDMYTime(fullDt));
+        // Keep popup open so the user can easily adjust hours and minutes!
+      } else {
+        const formatted = formatDMY(dayDate);
+        onChange(formatted);
+        handleClose();
+      }
     } else if (mode === 'range') {
       if (!rangeStart || (rangeStart && rangeEnd)) {
         // Start a new range
@@ -325,6 +385,16 @@ export default function FlatpickrCalendar({
     }
   };
 
+  // Time change handler (Hours, Minutes, Period)
+  const handleTimeChange = (newHour: number, newMinute: number, newPeriod: 'AM' | 'PM') => {
+    setSelectedHour(newHour);
+    setSelectedMinute(newMinute);
+    setSelectedPeriod(newPeriod);
+    const base = selectedDayDate || parseAnyDate(value) || new Date(currentYear, currentMonth, 1);
+    const fullDt = buildFullDateTime(base, newHour, newMinute, newPeriod);
+    onChange(formatDMYTime(fullDt));
+  };
+
   // Month select handler (when clicking a month in the month-view)
   const handleSelectMonth = (monthIdx: number) => {
     setCurrentMonth(monthIdx);
@@ -346,8 +416,20 @@ export default function FlatpickrCalendar({
     setCurrentMonth(today.getMonth());
     setYearBase(today.getFullYear());
     if (mode === 'single') {
-      onChange(formatDMY(today));
-      handleClose();
+      setSelectedDayDate(today);
+      if (showTime) {
+        const h12 = getHour12(today);
+        const m = today.getMinutes();
+        const p = today.getHours() >= 12 ? 'PM' : 'AM';
+        setSelectedHour(h12);
+        setSelectedMinute(m);
+        setSelectedPeriod(p);
+        const fullDt = buildFullDateTime(today, h12, m, p);
+        onChange(formatDMYTime(fullDt));
+      } else {
+        onChange(formatDMY(today));
+        handleClose();
+      }
     } else {
       setRangeStart(today);
       setRangeEnd(today);
@@ -393,7 +475,14 @@ export default function FlatpickrCalendar({
   }
 
   const todayDMY = formatDMY(new Date());
-  const selectedDMY = mode === 'single' ? toDisplayFormat(value) : '';
+  const selectedDMY =
+    mode === 'single'
+      ? selectedDayDate
+        ? formatDMY(selectedDayDate)
+        : parseAnyDate(value)
+        ? formatDMY(parseAnyDate(value)!)
+        : ''
+      : '';
 
   // Generate Year Range (prev 5 - next 5 years: total 12 years in 3x4 grid)
   const yearRangeStart = yearBase - 5;
@@ -402,7 +491,7 @@ export default function FlatpickrCalendar({
     yearList.push(y);
   }
 
-  const displayVal = toDisplayFormat(value);
+  const displayVal = toDisplayFormat(value, showTime);
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -638,6 +727,78 @@ export default function FlatpickrCalendar({
               </div>
             )}
 
+            {/* Time Picker Panel (when showTime is true) */}
+            {showTime && mode === 'single' && (
+              <div className="pt-2.5 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 px-1">
+                <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                  <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span className="text-xs font-semibold">Time:</span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {/* Hour */}
+                  <select
+                    value={selectedHour}
+                    onChange={(e) =>
+                      handleTimeChange(Number(e.target.value), selectedMinute, selectedPeriod)
+                    }
+                    className="h-7 px-2 text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono cursor-pointer"
+                    title="Hour"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                      <option key={h} value={h}>
+                        {String(h).padStart(2, '0')}
+                      </option>
+                    ))}
+                  </select>
+
+                  <span className="text-xs font-bold text-slate-400">:</span>
+
+                  {/* Minute */}
+                  <select
+                    value={selectedMinute}
+                    onChange={(e) =>
+                      handleTimeChange(selectedHour, Number(e.target.value), selectedPeriod)
+                    }
+                    className="h-7 px-2 text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono cursor-pointer"
+                    title="Minute"
+                  >
+                    {Array.from({ length: 60 }, (_, i) => i).map((m) => (
+                      <option key={m} value={m}>
+                        {String(m).padStart(2, '0')}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* AM / PM Toggle */}
+                  <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-800 text-[11px] font-bold font-mono">
+                    <button
+                      type="button"
+                      onClick={() => handleTimeChange(selectedHour, selectedMinute, 'AM')}
+                      className={`px-2 py-0.5 rounded-md transition-colors ${
+                        selectedPeriod === 'AM'
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      AM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleTimeChange(selectedHour, selectedMinute, 'PM')}
+                      className={`px-2 py-0.5 rounded-md transition-colors ${
+                        selectedPeriod === 'PM'
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      PM
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Quick Actions Footer */}
             <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
               <button
@@ -646,10 +807,10 @@ export default function FlatpickrCalendar({
                 className="flex items-center gap-1 px-2.5 py-1 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg font-semibold transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" />
-                <span>Today</span>
+                <span>{showTime ? 'Now' : 'Today'}</span>
               </button>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 {value && (
                   <button
                     type="button"
@@ -659,13 +820,24 @@ export default function FlatpickrCalendar({
                     Clear
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors cursor-pointer"
-                >
-                  Close
-                </button>
+                {showTime ? (
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors cursor-pointer shadow-sm"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Apply</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
+                )}
               </div>
             </div>
           </div>,

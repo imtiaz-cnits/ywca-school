@@ -52,7 +52,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Card Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white dark:bg-white/10 border border-slate-200 dark:border-white/20 p-2 mb-4 shadow-xl shadow-indigo-600/10 dark:shadow-indigo-600/20 backdrop-blur-md">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white dark:bg-white border border-slate-200 dark:border-white p-2.5 mb-4 shadow-xl shadow-indigo-600/10 dark:shadow-indigo-500/20">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.svg" alt="YWCA Nursery School Logo" className="w-full h-full object-contain" />
           </div>
