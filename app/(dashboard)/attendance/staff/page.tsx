@@ -24,7 +24,40 @@ import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 
 export default function StaffAttendancePage() {
-  const [date, setDate] = useState(format(new Date(), 'dd-MM-yyyy'));
+  const [fromDate, setFromDate] = useState(format(new Date(), 'dd-MM-yyyy'));
+  const [toDate, setToDate] = useState(format(new Date(), 'dd-MM-yyyy'));
+  
+    const handleFromDateChange = (val: string) => {
+      setFromDate(val);
+      if (!val) return;
+      const fromMatch = val.match(/^(\d{2})-(\d{2})-(\d{4})/);
+      const toMatch = toDate.match(/^(\d{2})-(\d{2})-(\d{4})/);
+      if (fromMatch && toMatch) {
+        const fromTime = new Date(Number(fromMatch[3]), Number(fromMatch[2]) - 1, Number(fromMatch[1])).getTime();
+        const toTime = new Date(Number(toMatch[3]), Number(toMatch[2]) - 1, Number(toMatch[1])).getTime();
+        if (toTime < fromTime) {
+          setToDate(val);
+        }
+      }
+    };
+  
+    const handleToDateChange = (val: string) => {
+      if (!val) {
+        setToDate('');
+        return;
+      }
+      const fromMatch = fromDate.match(/^(\d{2})-(\d{2})-(\d{4})/);
+      const toMatch = val.match(/^(\d{2})-(\d{2})-(\d{4})/);
+      if (fromMatch && toMatch) {
+        const fromTime = new Date(Number(fromMatch[3]), Number(fromMatch[2]) - 1, Number(fromMatch[1])).getTime();
+        const toTime = new Date(Number(toMatch[3]), Number(toMatch[2]) - 1, Number(toMatch[1])).getTime();
+        if (toTime < fromTime) {
+          setToDate(fromDate);
+          return;
+        }
+      }
+      setToDate(val);
+    };
   const [type, setType] = useState<'TEACHER' | 'STAFF' | ''>('');
 
   const [loading, setLoading] = useState(false);
@@ -86,7 +119,8 @@ export default function StaffAttendancePage() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      params.append('date', date);
+      const dateParam = fromDate && toDate && fromDate !== toDate ? `${fromDate} to ${toDate}` : fromDate;
+      if (dateParam) params.append('date', dateParam);
       if (type) params.append('type', type);
 
       const res = await fetch(`/api/attendance/employee?${params.toString()}`);
@@ -109,33 +143,33 @@ export default function StaffAttendancePage() {
     } finally {
       setLoading(false);
     }
-  }, [date, type]);
+  }, [fromDate, toDate, type]);
 
   useEffect(() => {
     fetchAttendance();
   }, [fetchAttendance]);
 
   const displayDateText = useMemo(() => {
-    if (!date) return '';
+    if (!fromDate) return '';
     const parseAny = (s: string) => {
       const match = s.trim().match(/^(\d{2})-(\d{2})-(\d{4})/);
       if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
       return new Date(s);
     };
-    if (date.includes(' to ')) {
-      const [start, end] = date.split(' to ');
+    if (fromDate !== toDate && toDate) {
+      const [start, end] = [fromDate, toDate];
       try {
         return `${format(parseAny(start), 'dd MMM yyyy')} to ${format(parseAny(end), 'dd MMM yyyy')}`;
       } catch {
-        return date;
+        return `${fromDate} to ${toDate}`;
       }
     }
     try {
-      return format(parseAny(date), 'dd MMMM yyyy (EEEE)');
+      return format(parseAny(fromDate), 'dd MMMM yyyy (EEEE)');
     } catch {
-      return date;
+      return fromDate;
     }
-  }, [date]);
+  }, [fromDate, toDate]);
 
   // Open Manual Entry Modal
   const openManualModal = (item: any) => {
@@ -153,10 +187,7 @@ export default function StaffAttendancePage() {
     if (!selectedStaff) return;
 
     // Determine target single date string
-    let targetDate = date;
-    if (date.includes(' to ')) {
-      targetDate = date.split(' to ')[0].trim();
-    }
+    const targetDate = fromDate;
 
     try {
       setSavingManual(true);
@@ -233,13 +264,26 @@ export default function StaffAttendancePage() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             {/* Left Side: Filter Controls */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {/* Date / Range Picker */}
-              <div className="w-full sm:w-64 min-w-[245px]">
+              {/* From Date Calendar */}
+              <div className="w-full sm:w-48 min-w-[170px]">
                 <FlatpickrCalendar
-                  mode="range"
-                  value={date}
-                  onChange={(val) => setDate(val)}
-                  placeholder="Select date or range..."
+                  mode="single"
+                  value={fromDate}
+                  onChange={handleFromDateChange}
+                  placeholder="From Date"
+                  prefix="From:"
+                />
+              </div>
+
+              {/* To Date Calendar (Dates before From Date disabled) */}
+              <div className="w-full sm:w-48 min-w-[170px]">
+                <FlatpickrCalendar
+                  mode="single"
+                  value={toDate}
+                  minDate={fromDate}
+                  onChange={handleToDateChange}
+                  placeholder="To Date"
+                  prefix="To:"
                 />
               </div>
 

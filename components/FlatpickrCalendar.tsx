@@ -9,7 +9,7 @@ import {
   RotateCcw,
   X,
 } from 'lucide-react';
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface FlatpickrCalendarProps {
@@ -22,6 +22,9 @@ interface FlatpickrCalendarProps {
   dateFormat?: string;
   allowClear?: boolean;
   showTime?: boolean;
+  minDate?: string | Date;
+  maxDate?: string | Date;
+  prefix?: string;
 }
 
 const MONTH_NAMES = [
@@ -139,6 +142,9 @@ export default function FlatpickrCalendar({
   disabled = false,
   allowClear = false,
   showTime = false,
+  minDate,
+  maxDate,
+  prefix,
 }: FlatpickrCalendarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -147,6 +153,21 @@ export default function FlatpickrCalendar({
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [viewMode, setViewMode] = useState<'days' | 'months' | 'years'>('days');
+
+  // Normalize minDate and maxDate at midnight UTC/local
+  const minMidnight = useMemo(() => {
+    if (!minDate) return null;
+    const dt = minDate instanceof Date ? minDate : parseAnyDate(minDate);
+    if (!dt) return null;
+    return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  }, [minDate]);
+
+  const maxMidnight = useMemo(() => {
+    if (!maxDate) return null;
+    const dt = maxDate instanceof Date ? maxDate : parseAnyDate(maxDate);
+    if (!dt) return null;
+    return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  }, [maxDate]);
 
   // Parse initial selected dates from string
   const initialSingle = mode === 'single' ? parseAnyDate(value) : null;
@@ -264,7 +285,18 @@ export default function FlatpickrCalendar({
     if (disabled) return;
     updatePosition();
     setViewMode('days');
-    setYearBase(currentYear);
+    if (minMidnight && mode === 'single') {
+      const curDt = parseAnyDate(value);
+      if (!curDt || curDt.getTime() < minMidnight.getTime()) {
+        setCurrentYear(minMidnight.getFullYear());
+        setCurrentMonth(minMidnight.getMonth());
+        setYearBase(minMidnight.getFullYear());
+      } else {
+        setYearBase(currentYear);
+      }
+    } else {
+      setYearBase(currentYear);
+    }
     setIsOpen(true);
   };
 
@@ -312,9 +344,54 @@ export default function FlatpickrCalendar({
     };
   }, [isOpen]);
 
+  // Check if navigating prev/next is out of min/max bounds
+  const isPrevDisabled = useMemo(() => {
+    if (!minMidnight) return false;
+    if (viewMode === 'days') {
+      const prevMonthEnd = new Date(
+        currentMonth === 0 ? currentYear - 1 : currentYear,
+        currentMonth === 0 ? 12 : currentMonth,
+        0,
+        23, 59, 59, 999
+      ).getTime();
+      return prevMonthEnd < minMidnight.getTime();
+    }
+    if (viewMode === 'months') {
+      const prevYearEnd = new Date(currentYear - 1, 11, 31, 23, 59, 59, 999).getTime();
+      return prevYearEnd < minMidnight.getTime();
+    }
+    if (viewMode === 'years') {
+      const prevDecadeEnd = new Date(yearBase - 5 - 1, 11, 31, 23, 59, 59, 999).getTime();
+      return prevDecadeEnd < minMidnight.getTime();
+    }
+    return false;
+  }, [minMidnight, viewMode, currentYear, currentMonth, yearBase]);
+
+  const isNextDisabled = useMemo(() => {
+    if (!maxMidnight) return false;
+    if (viewMode === 'days') {
+      const nextMonthStart = new Date(
+        currentMonth === 11 ? currentYear + 1 : currentYear,
+        currentMonth === 11 ? 0 : currentMonth + 1,
+        1
+      ).getTime();
+      return nextMonthStart > maxMidnight.getTime();
+    }
+    if (viewMode === 'months') {
+      const nextYearStart = new Date(currentYear + 1, 0, 1).getTime();
+      return nextYearStart > maxMidnight.getTime();
+    }
+    if (viewMode === 'years') {
+      const nextDecadeStart = new Date(yearBase - 5 + 12, 0, 1).getTime();
+      return nextDecadeStart > maxMidnight.getTime();
+    }
+    return false;
+  }, [maxMidnight, viewMode, currentYear, currentMonth, yearBase]);
+
   // Navigate Header (< and >)
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isPrevDisabled) return;
     if (viewMode === 'days') {
       if (currentMonth === 0) {
         setCurrentMonth(11);
@@ -333,6 +410,7 @@ export default function FlatpickrCalendar({
 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isNextDisabled) return;
     if (viewMode === 'days') {
       if (currentMonth === 11) {
         setCurrentMonth(0);
@@ -351,6 +429,10 @@ export default function FlatpickrCalendar({
 
   // Day click handler -> Outputs DD-MM-YYYY or DD-MM-YYYY hh:mm AM/PM
   const handleDayClick = (dayDate: Date) => {
+    const dMid = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate()).getTime();
+    if (minMidnight && dMid < minMidnight.getTime()) return;
+    if (maxMidnight && dMid > maxMidnight.getTime()) return;
+
     if (mode === 'single') {
       setSelectedDayDate(dayDate);
       if (showTime) {
@@ -412,6 +494,10 @@ export default function FlatpickrCalendar({
   const handleSetToday = (e: React.MouseEvent) => {
     e.stopPropagation();
     const today = new Date();
+    const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    if (minMidnight && todayMid < minMidnight.getTime()) return;
+    if (maxMidnight && todayMid > maxMidnight.getTime()) return;
+
     setCurrentYear(today.getFullYear());
     setCurrentMonth(today.getMonth());
     setYearBase(today.getFullYear());
@@ -506,8 +592,13 @@ export default function FlatpickrCalendar({
           disabled ? 'opacity-50 cursor-not-allowed' : ''
         }`}
       >
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           <CalendarIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+          {prefix && (
+            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider shrink-0 select-none">
+              {prefix}
+            </span>
+          )}
           <span className={`truncate ${!displayVal ? 'text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-200 font-mono text-[13px]'}`}>
             {displayVal || placeholder}
           </span>
@@ -545,7 +636,12 @@ export default function FlatpickrCalendar({
               <button
                 type="button"
                 onClick={handlePrev}
-                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
+                disabled={isPrevDisabled}
+                className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
+                  isPrevDisabled
+                    ? 'opacity-20 cursor-not-allowed text-slate-300 dark:text-slate-700'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600'
+                }`}
                 title="Previous"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -587,7 +683,12 @@ export default function FlatpickrCalendar({
               <button
                 type="button"
                 onClick={handleNext}
-                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
+                disabled={isNextDisabled}
+                className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
+                  isNextDisabled
+                    ? 'opacity-20 cursor-not-allowed text-slate-300 dark:text-slate-700'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600'
+                }`}
                 title="Next"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -603,15 +704,24 @@ export default function FlatpickrCalendar({
                 <div className="grid grid-cols-3 gap-2">
                   {yearList.map((y) => {
                     const isSelected = y === currentYear;
+                    const yearEnd = new Date(y, 11, 31, 23, 59, 59, 999).getTime();
+                    const yearStart = new Date(y, 0, 1).getTime();
+                    const isYearDisabled = Boolean(
+                      (minMidnight && yearEnd < minMidnight.getTime()) ||
+                      (maxMidnight && yearStart > maxMidnight.getTime())
+                    );
                     return (
                       <button
                         key={y}
                         type="button"
-                        onClick={() => handleSelectYear(y)}
-                        className={`py-2.5 px-3 rounded-xl text-xs font-semibold font-mono transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-bold'
-                            : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600'
+                        disabled={isYearDisabled}
+                        onClick={() => !isYearDisabled && handleSelectYear(y)}
+                        className={`py-2.5 px-3 rounded-xl text-xs font-semibold font-mono transition-all ${
+                          isYearDisabled
+                            ? 'opacity-25 cursor-not-allowed text-slate-300 dark:text-slate-700'
+                            : isSelected
+                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-bold cursor-pointer'
+                            : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 cursor-pointer'
                         }`}
                       >
                         {y}
@@ -629,15 +739,24 @@ export default function FlatpickrCalendar({
                 <div className="grid grid-cols-3 gap-2">
                   {MONTH_SHORT.map((mName, idx) => {
                     const isSelected = idx === currentMonth;
+                    const monthEnd = new Date(currentYear, idx + 1, 0, 23, 59, 59, 999).getTime();
+                    const monthStart = new Date(currentYear, idx, 1).getTime();
+                    const isMonthDisabled = Boolean(
+                      (minMidnight && monthEnd < minMidnight.getTime()) ||
+                      (maxMidnight && monthStart > maxMidnight.getTime())
+                    );
                     return (
                       <button
                         key={mName}
                         type="button"
-                        onClick={() => handleSelectMonth(idx)}
-                        className={`py-2.5 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-bold'
-                            : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600'
+                        disabled={isMonthDisabled}
+                        onClick={() => !isMonthDisabled && handleSelectMonth(idx)}
+                        className={`py-2.5 px-3 rounded-xl text-xs font-semibold transition-all ${
+                          isMonthDisabled
+                            ? 'opacity-25 cursor-not-allowed text-slate-300 dark:text-slate-700'
+                            : isSelected
+                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-bold cursor-pointer'
+                            : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 cursor-pointer'
                         }`}
                       >
                         {MONTH_NAMES[idx]}
@@ -666,6 +785,11 @@ export default function FlatpickrCalendar({
                   {calendarDays.map(({ date, isCurrentMonth }, i) => {
                     const dDMY = formatDMY(date);
                     const isToday = dDMY === todayDMY;
+                    const dMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+                    const isDayDisabled = Boolean(
+                      (minMidnight && dMidnight < minMidnight.getTime()) ||
+                      (maxMidnight && dMidnight > maxMidnight.getTime())
+                    );
 
                     // Selection checks
                     let isSelected = false;
@@ -703,21 +827,24 @@ export default function FlatpickrCalendar({
                       <button
                         key={i}
                         type="button"
-                        onClick={() => handleDayClick(date)}
+                        disabled={isDayDisabled}
+                        onClick={() => !isDayDisabled && handleDayClick(date)}
                         onMouseEnter={() => {
-                          if (mode === 'range' && rangeStart && !rangeEnd) {
+                          if (!isDayDisabled && mode === 'range' && rangeStart && !rangeEnd) {
                             setHoverDate(date);
                           }
                         }}
-                        className={`h-9 w-full rounded-xl text-xs font-semibold flex items-center justify-center transition-all cursor-pointer relative ${
-                          isSelected
-                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold z-10'
+                        className={`h-9 w-full rounded-xl text-xs font-semibold flex items-center justify-center transition-all relative ${
+                          isDayDisabled
+                            ? 'opacity-25 cursor-not-allowed text-slate-300 dark:text-slate-700 pointer-events-none'
+                            : isSelected
+                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold z-10 cursor-pointer'
                             : isInRange
-                            ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-none'
+                            ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-none cursor-pointer'
                             : !isCurrentMonth
-                            ? 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'
-                            : 'text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600'
-                        } ${isToday && !isSelected ? 'ring-1 ring-indigo-500 font-bold text-indigo-600 dark:text-indigo-400' : ''}`}
+                            ? 'text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer'
+                            : 'text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 cursor-pointer'
+                        } ${isToday && !isSelected && !isDayDisabled ? 'ring-1 ring-indigo-500 font-bold text-indigo-600 dark:text-indigo-400' : ''}`}
                       >
                         {date.getDate()}
                       </button>
@@ -801,14 +928,28 @@ export default function FlatpickrCalendar({
 
             {/* Quick Actions Footer */}
             <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-              <button
-                type="button"
-                onClick={handleSetToday}
-                className="flex items-center gap-1 px-2.5 py-1 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg font-semibold transition-colors cursor-pointer"
-              >
-                <RotateCcw className="w-3 h-3" />
-                <span>{showTime ? 'Now' : 'Today'}</span>
-              </button>
+              {(() => {
+                const todayMid = new Date().setHours(0, 0, 0, 0);
+                const isTodayDisabled = Boolean(
+                  (minMidnight && todayMid < minMidnight.getTime()) ||
+                  (maxMidnight && todayMid > maxMidnight.getTime())
+                );
+                return (
+                  <button
+                    type="button"
+                    onClick={handleSetToday}
+                    disabled={isTodayDisabled}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-semibold transition-colors ${
+                      isTodayDisabled
+                        ? 'opacity-25 cursor-not-allowed text-slate-400'
+                        : 'text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 cursor-pointer'
+                    }`}
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>{showTime ? 'Now' : 'Today'}</span>
+                  </button>
+                );
+              })()}
 
               <div className="flex items-center gap-1.5">
                 {value && (
